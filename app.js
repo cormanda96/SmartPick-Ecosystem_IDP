@@ -1148,7 +1148,7 @@ export async function renderDispenseTables() {
 
 
 // ============================================================
-//  DISPENSE PAGE — Open proposal modal
+//  DISPENSE PAGE — Open proposal modal (VARIABLE GAPS MOUNT FIX)
 // ============================================================
 export async function openProposal(id) {
     window._activeDispenseId = id
@@ -1166,13 +1166,18 @@ export async function openProposal(id) {
         const name     = item.is_custom ? item.custom_name : item.components?.name || '—'
         const drawer   = item.components?.drawers
         const rackCode = (drawer && drawer.label) ? drawer.label : 'N/A'
-        const ledIndex = (drawer && drawer.led_index !== undefined) ? drawer.led_index : null
+        
+        // CRITICAL FIX: Extract the integer out of the array safely so it passes as a standalone value
+        let ledIndex = null
+        if (drawer && drawer.led_index) {
+            ledIndex = Array.isArray(drawer.led_index) ? drawer.led_index[0] : drawer.led_index
+        }
 
         // SEARCH button always shows — disabled if no drawer assigned
         const searchBtn = (ledIndex !== null && rackCode !== 'N/A')
-            ? `<button onclick="sendToESP32(${ledIndex}, '${rackCode}')" 
+            ? `<button onclick="window.sendToESP32(${parseInt(ledIndex)}, '${rackCode.trim()}')" 
                        class="btn-role" 
-                       style="background:var(--open-green); color:white; border:none; padding:5px 12px;">SEARCH</button>`
+                       style="background:var(--open-green); color:white; border:none; padding:5px 12px; cursor:pointer;">SEARCH</button>`
             : `<button class="btn-role" 
                        style="background:#aaa; color:white; border:none; padding:5px 12px; cursor:not-allowed;" 
                        disabled>SEARCH</button>`
