@@ -362,7 +362,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label, "drawer number", led_index)')
+        .select('id, name, qty, categories(name), drawers(label, drawer_number, led_index)')
         .order('name')
 
     if (urlFilter) {
@@ -1155,7 +1155,7 @@ export async function openProposal(id) {
 
     const { data: prop } = await supabase
         .from('proposals')
-        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name, drawers(label, "drawer number", led_index)))')
+        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name, drawers(label, drawer_number, led_index)))')
         .eq('id', id)
         .single()
 
@@ -1250,12 +1250,12 @@ export async function sendToESP32(ledIndex, rackCode) {
         // 2. Automatically flip the active status column for this specific rack label
         const { error: drawerError } = await supabase
             .from('drawers')
-            .update({ dispatch_active: true }) // Matches your exact boolean column name
-            .eq('label', rackCode) // Matches 'D95', 'D97', etc.
+            .update({ dispatch_active: true })
+            .eq('label', rackCode) 
 
         if (drawerError) throw drawerError
 
-        console.log(`Live sync successful: Drawer ${rackCode} is now active!`)
+        alert(`Signal sent to Rack ${rackCode} (LED ${ledIndex}). LED should be blinking.`);
 
     } catch (err) {
         console.error("Hardware pipeline update execution failed:", err.message)
