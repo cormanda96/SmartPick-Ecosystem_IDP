@@ -1233,17 +1233,27 @@ export async function highlightAllDrawers() {
 //  'store_settings' table and reads the led_target column.
 // ============================================================
 export async function sendToESP32(ledIndex, rackCode) {
-    // We repurpose store_settings to broadcast the LED target
-    // The ESP32 listens to Realtime changes on this row
-    const { error } = await supabase
-        .from('store_settings')
-        .update({ led_target: ledIndex, updated_at: new Date() })
-        .eq('id', 1)
+    try {
+        // 1. Update global store settings so hardware channels catch the integer
+        const { error: storeError } = await supabase
+            .from('store_settings')
+            .update({ led_target: ledIndex })
+            .eq('id', 1)
 
-    if (error) {
-        alert('Failed to send signal: ' + error.message)
-    } else {
-        alert(`Signal sent to Rack ${rackCode} (LED ${ledIndex}). LED should be blinking.`)
+        if (storeError) throw storeError
+
+        // 2. Automatically flip the active status column for this specific rack label
+        const { error: drawerError } = await supabase
+            .from('drawers')
+            .update({ dispatch_active: true }) // Matches your exact boolean column name
+            .eq('label', rackCode) // Matches 'D95', 'D97', etc.
+
+        if (drawerError) throw drawerError
+
+        console.log(`Live sync successful: Drawer ${rackCode} is now active!`)
+
+    } catch (err) {
+        console.error("Hardware pipeline update execution failed:", err.message)
     }
 }
 
