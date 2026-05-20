@@ -1165,7 +1165,7 @@ export async function openProposal(id) {
     listBody.innerHTML = prop.proposal_items.map(item => {
         const name     = item.is_custom ? item.custom_name : item.components?.name || '—'
         const drawer   = item.components?.drawers
-        const rackCode = (drawer && drawer.label) ? drawer.label : 'N/A'
+        const rackCode = (drawer && drawer.label) ? drawer.label.trim() : 'N/A'
         
         // CRITICAL FIX: Extract the integer out of the array safely so it passes as a standalone value
         let ledIndex = null
@@ -1175,7 +1175,7 @@ export async function openProposal(id) {
 
         // SEARCH button always shows — disabled if no drawer assigned
         const searchBtn = (ledIndex !== null && rackCode !== 'N/A')
-            ? `<button onclick="window.sendToESP32(${parseInt(ledIndex)}, '${rackCode.trim()}')" 
+            ? `<button onclick="window.sendToESP32(${parseInt(ledIndex)}, '${rackCode}')" 
                        class="btn-role" 
                        style="background:var(--open-green); color:white; border:none; padding:5px 12px; cursor:pointer;">SEARCH</button>`
             : `<button class="btn-role" 
