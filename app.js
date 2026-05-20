@@ -1,0 +1,1518 @@
+// ============================================================
+//  SMARTPICK — app.js (Supabase Edition)
+// ============================================================
+
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+const SUPABASE_URL  = 'https://dizglrupjeltbhkvhvov.supabase.co'
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpemdscnVwamVsdGJoa3Zodm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2Njg2ODAsImV4cCI6MjA5MzI0NDY4MH0.E8gw7xjrKdHiuJ3wYHvxFCqJGUIHP4arkoyRrkbQVcY'
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON)
+
+
+// ============================================================
+//  AUTH — LOGIN
+//  Called from login.html form submit
+// ============================================================
+export async function handleLogin(email, password) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+        alert('Login failed: ' + error.message)
+        return
+    }
+
+    // Always fetch the role from the profiles table using the active session.
+    // This is the most reliable source — user_metadata can be stale if the
+    // account was registered before the role-saving fix was applied.
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single()
+
+    if (profileError || !profile) {
+        // Last resort: fall back to user_metadata
+        const metaRole = data.user.user_metadata?.role
+        if (metaRole) {
+            localStorage.setItem('userRole', metaRole)
+            redirectByRole(metaRole)
+            return
+        }
+        alert('Could not load user profile. Please contact admin.')
+        return
+    }
+
+    localStorage.setItem('userRole', profile.role)
+    redirectByRole(profile.role)
+}
+
+function redirectByRole(role) {
+    if (role === 'supervisor') {
+        window.location.href = 'dashboard2.html'
+    } else if (role === 'manager') {
+        window.location.href = 'dashboard3.html'
+    } else {
+        window.location.href = 'dashboard1.html'
+    }
+}
+
+
+// ============================================================
+//  AUTH — REGISTER
+//  Called from register.html form submit
+// ============================================================
+export async function handleRegister(fullName, email, password, role, matricNumber, supervisorCode) {
+
+    // ── Pre-validate BEFORE creating the auth account ──────
+    // This way we never create an orphaned auth user
+
+    if (role === 'supervisor') {
+        if (!supervisorCode || supervisorCode.trim() === '') {
+            alert('Please create your exclusive auth code before registering.')
+            return
+        }
+        // Check if staff_code is already taken
+        const { data: existing } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('staff_code', supervisorCode.trim())
+            .single()
+        if (existing) {
+            alert('That supervisor auth code is already taken. Please choose a different code.')
+            return
+        }
+    }
+
+    if (role === 'student') {
+        if (!supervisorCode || supervisorCode.trim() === '') {
+            alert('Supervisor auth code is required. Please ask your supervisor for their code.')
+            return
+        }
+        // Verify the supervisor code exists before proceeding
+        const { data: supData } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'supervisor')
+            .eq('staff_code', supervisorCode.trim())
+            .single()
+        if (!supData) {
+            alert('Invalid supervisor auth code. Please check the code and try again.')
+            return
+        }
+    }
+
+    // ── All validations passed — now create the auth account ──
+    const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+            data: {
+                full_name: fullName,
+                role:      role
+            }
+        }
+    })
+
+    if (error) {
+        alert('Registration failed: ' + error.message)
+        return
+    }
+
+    // Wait briefly for the trigger to create the profiles row
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // ── Post-signup: save role-specific data to profiles ──
+    if (role === 'supervisor' && data.user) {
+        const { error: codeError } = await supabase
+            .from('profiles')
+            .update({ staff_code: supervisorCode.trim() })
+            .eq('id', data.user.id)
+
+        if (codeError) {
+            alert('Account created but failed to save supervisor code. Contact admin. Error: ' + codeError.message)
+            await supabase.auth.signOut()
+            return
+        }
+    }
+
+    if (role === 'student' && data.user) {
+        // Re-fetch supervisor id (already validated above)
+        const { data: supData } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('role', 'supervisor')
+            .eq('staff_code', supervisorCode.trim())
+            .single()
+
+        await supabase
+            .from('profiles')
+            .update({
+                matric_number: matricNumber || null,
+                supervisor_id: supData.id
+            })
+            .eq('id', data.user.id)
+    }
+
+    await supabase.auth.signOut()
+    alert('Registration successful! Please log in.')
+    window.location.href = 'login.html'
+}
+
+
+// ============================================================
+//  AUTH — LOGOUT
+// ============================================================
+export async function logout() {
+    await supabase.auth.signOut()
+    localStorage.removeItem('userRole')
+    window.location.href = 'index.html'
+}
+
+
+// ============================================================
+//  AUTH — GET CURRENT USER + PROFILE
+// ============================================================
+export async function getCurrentUser() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+    return { ...user, profile }
+}
+
+
+// ============================================================
+//  STORE STATUS — BANNER
+//  Reads is_open from store_settings table (single row)
+// ============================================================
+export async function initializeGlobalBanner() {
+    const banner     = document.getElementById('status-banner')
+    const statusText = document.getElementById('status-text')
+    if (!banner || !statusText) return
+
+    const { data, error } = await supabase
+        .from('store_settings')
+        .select('is_open')
+        .eq('id', 1)
+        .single()
+
+    if (error || !data) {
+        statusText.innerText = 'UNKNOWN'
+        return
+    }
+
+    if (data.is_open) {
+        banner.style.backgroundColor = 'var(--open-green)'
+        statusText.innerText = 'OPEN'
+    } else {
+        banner.style.backgroundColor = 'var(--closed-red)'
+        statusText.innerText = 'CLOSED'
+    }
+}
+
+
+// ============================================================
+//  STORE STATUS — TOGGLE (Manager only)
+// ============================================================
+export async function toggleStoreGlobal() {
+    // Read current state first
+    const { data: current } = await supabase
+        .from('store_settings')
+        .select('is_open')
+        .eq('id', 1)
+        .single()
+
+    const newState = !current.is_open
+
+    const { data: { user } } = await supabase.auth.getUser()
+
+    await supabase
+        .from('store_settings')
+        .update({ is_open: newState, updated_by: user.id, updated_at: new Date() })
+        .eq('id', 1)
+
+    // Update UI
+    const label = document.getElementById('current-status-label')
+    const btn   = document.getElementById('toggle-btn')
+
+    if (label && btn) {
+        label.innerText = `Store is currently ${newState ? 'OPEN' : 'CLOSED'}`
+        btn.innerText   = newState ? 'CLOSE STORE' : 'OPEN STORE'
+        btn.style.backgroundColor = newState ? 'var(--closed-red)' : 'var(--open-green)'
+    }
+
+    await initializeGlobalBanner()
+}
+
+
+// ============================================================
+//  SIDEBAR — NAVIGATION
+// ============================================================
+export async function renderGlobalNavigation() {
+    const sidebarNav = document.getElementById('side-nav')
+    const topNav     = document.getElementById('top-nav-links')
+
+    // Public pages (no sidebar): show Home, Login, Register
+    if (!sidebarNav && topNav) {
+        topNav.innerHTML = `
+            <a href="index.html"    style="color:white; text-decoration:none; margin-left:20px;">Home</a>
+            <a href="login.html"    style="color:white; text-decoration:none; margin-left:20px;">Log In</a>
+            <a href="register.html" style="color:white; text-decoration:none; margin-left:20px;">Register</a>
+        `
+        return
+    }
+
+    if (!sidebarNav) return
+
+    const role = localStorage.getItem('userRole') || 'student'
+
+    // Fetch categories from Supabase for the sidebar dropdown
+    const { data: categories } = await supabase
+        .from('categories')
+        .select('name')
+        .order('name')
+
+    let dashboardLink = 'dashboard1.html'
+    if (role === 'supervisor') dashboardLink = 'dashboard2.html'
+    if (role === 'manager')    dashboardLink = 'dashboard3.html'
+
+    sidebarNav.innerHTML = `<a href="${dashboardLink}" class="sidebar-link">Dashboard</a>`
+
+    const categoryLinks = (categories || []).map(cat =>
+        `<a href="catalog.html?filter=${encodeURIComponent(cat.name)}" class="sub-link">${cat.name}</a>`
+    ).join('')
+
+    sidebarNav.innerHTML += `
+        <div class="sidebar-dropdown">
+            <button class="dropdown-btn" onclick="this.nextElementSibling.classList.toggle('show')">
+                Browse Categories <span style="float:right;">▾</span>
+            </button>
+            <div class="dropdown-container" id="category-dropdown">
+                <input type="text" id="cat-search" placeholder="Search category..."
+                       onkeyup="filterSidebarCategories(this.value)"
+                       style="width:90%; margin: 5px 5%; padding: 5px; border-radius: 4px; border:1px solid #ddd;">
+                ${categoryLinks}
+            </div>
+        </div>
+    `
+
+    if (role === 'student') {
+        sidebarNav.innerHTML += `<a href="submission.html" class="sidebar-link">Submit Proposal</a>`
+        sidebarNav.innerHTML += `<a href="status.html"     class="sidebar-link">My Status</a>`
+    } else if (role === 'supervisor') {
+        sidebarNav.innerHTML += `<a href="review.html" class="sidebar-link">Review Pending</a>`
+    } else if (role === 'manager') {
+        sidebarNav.innerHTML += `<a href="catalog.html"  class="sidebar-link">Update Catalog</a>`
+        sidebarNav.innerHTML += `<a href="dispense.html" class="sidebar-link">Component Student</a>`
+        sidebarNav.innerHTML += `<a href="history.html"  class="sidebar-link">History</a>`
+    }
+}
+
+
+// ============================================================
+//  SIDEBAR — Category search filter (unchanged, no DB needed)
+// ============================================================
+export function filterSidebarCategories(query) {
+    const links = document.querySelectorAll('#category-dropdown .sub-link')
+    links.forEach(link => {
+        link.style.display = link.textContent.toLowerCase().includes(query.toLowerCase())
+            ? 'block' : 'none'
+    })
+}
+
+
+// ============================================================
+//  SIDEBAR — Toggle open/close
+// ============================================================
+export function toggleSidebar() {
+    const sidebar = document.getElementById('side-panel')
+    const content = document.getElementById('main-content')
+    sidebar.classList.toggle('open')
+    if (content) content.classList.toggle('shifted')
+}
+
+
+// ============================================================
+//  CATALOG — Render component grid
+// ============================================================
+export async function renderCatalog() {
+    const grid = document.getElementById('catalog-grid')
+    if (!grid) return
+
+    const role       = localStorage.getItem('userRole') || 'student'
+    const urlParams  = new URLSearchParams(window.location.search)
+    const urlFilter  = urlParams.get('filter')
+    const searchTerm = (urlParams.get('search') || '').toLowerCase()
+
+    // Build query
+    // Pre-fetch all occupied drawers so catalog cards know which are taken
+    const { data: allComps } = await supabase
+        .from('components')
+        .select('drawers(label)')
+    window._occupiedDrawers = {}
+    ;(allComps || []).forEach(c => {
+        if (c.drawers?.label) window._occupiedDrawers[c.drawers.label] = true
+    })
+
+    let query = supabase
+        .from('components')
+        .select('id, name, qty, categories(name), drawers(label, "drawer number", led_index)')
+        .order('name')
+
+    if (urlFilter) {
+        // Filter by category name via join
+        const { data: cat } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('name', urlFilter)
+            .single()
+
+        if (cat) query = query.eq('category_id', cat.id)
+    }
+
+    const { data: items, error } = await query
+
+    if (error) {
+        grid.innerHTML = `<p style="color:red;">Failed to load catalog: ${error.message}</p>`
+        return
+    }
+
+    // Client-side search filter
+    const filtered = searchTerm
+        ? items.filter(i => i.name.toLowerCase().includes(searchTerm))
+        : items
+
+    grid.innerHTML = ''
+
+    // Populate category dropdown
+    const catSelect = document.getElementById('categorySelect')
+    if (catSelect) {
+        const { data: cats } = await supabase.from('categories').select('name').order('name')
+        catSelect.innerHTML = '<option value="all">All Categories</option>'
+        ;(cats || []).forEach(c => {
+            catSelect.innerHTML += `<option value="${c.name}" ${urlFilter === c.name ? 'selected' : ''}>${c.name}</option>`
+        })
+    }
+
+    filtered.forEach(item => {
+        const card = document.createElement('div')
+        card.className = 'component-card'
+        if (item.qty === 0 && role !== 'manager') {
+            card.classList.add('out-of-stock')
+        }
+
+        if (role === 'manager') {
+            const assignedDrawer = item.drawers;
+            const assignedLabel  = assignedDrawer ? assignedDrawer.label : '';
+
+            // 1. Fetch all matching drawer options from the database schema template array
+            const allDrawers = Array.from({ length: 99 }, (_, i) => `D${i + 1}`);
+
+            // 2. Generate the selection dropdown items cleanly
+            const drawerOptions = allDrawers.map(d => {
+                const isCurrent = d === assignedLabel;
+        
+                // A drawer should ONLY show as taken if another component is using it, 
+                // but it must remain selectable for THIS component card.
+                return `<option value="${d}" ${isCurrent ? 'selected' : ''}>
+                    ${d} ${isCurrent ? '✓' : ''}
+                </option>`;
+            }).join('');
+
+            card.innerHTML = `
+                <input type="text" value="${item.name}" class="mgr-input-name"
+                       oninput="updateComponent(${item.id}, 'name', this.value)">
+        
+                <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+                    <label style="font-weight:600;">Stock:</label>
+                    <input type="number" value="${item.qty}" class="mgr-input-qty" style="width:70px;"
+                           oninput="updateComponent(${item.id}, 'qty', this.value)">
+                </div>
+
+                <div style="margin-top:10px;">
+                    <label style="font-size:0.8rem; color:#555; font-weight:600;">Assigned Rack Drawer:</label>
+                    <select class="mgr-input-name" style="margin-top:4px; padding:4px;"
+                            onchange="assignDrawer(${item.id}, this.value)">
+                        <option value="">-- Not Assigned --</option>
+                        ${drawerOptions}
+                    </select>
+                </div>
+        
+                <button class="btn-remove" style="margin-top:12px; width:100%;" onclick="deleteComponent(${item.id})">Delete Item</button>
+            `;
+        } else {
+            card.innerHTML = `
+                <h3>${item.name}</h3>
+                <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
+                <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">
+                    Stock: ${item.qty}
+                </span>
+            `
+        }
+        grid.appendChild(card)
+    })
+
+    // Add New Item button for manager
+    if (role === 'manager') {
+        const addCard = document.createElement('div')
+        addCard.className = 'component-card'
+        addCard.style.border = '2px dashed var(--main-blue)'
+        addCard.innerHTML = `<button onclick="addNewComponent()" class="btn-role" style="width:100%; height:100%;">+ Add New Item</button>`
+        grid.appendChild(addCard)
+    }
+}
+
+
+// ============================================================
+//  CATALOG — Manager: update a component field
+// ============================================================
+export async function updateComponent(id, field, value) {
+    const update = {}
+    update[field] = field === 'qty' ? parseInt(value) : value
+
+    const { error } = await supabase.from('components').update(update).eq('id', id)
+    if (error) alert('Update failed: ' + error.message)
+}
+
+
+// ============================================================
+//  CATALOG — Manager: assign a drawer to a component
+// ============================================================
+export async function assignDrawer(componentId, drawerLabel) {
+    if (!drawerLabel) {
+        // Unassign — set drawer_id to null
+        const { error } = await supabase
+            .from('components')
+            .update({ drawer_id: null })
+            .eq('id', componentId)
+        if (error) alert('Failed to unassign drawer: ' + error.message)
+        else renderCatalog()
+        return
+    }
+
+    // Find the drawer id by label
+    const { data: drawer, error: drawerError } = await supabase
+        .from('drawers')
+        .select('id, drawer_code')
+        .eq('label', drawerLabel)
+        .limit(1)
+        .single()
+
+    if (drawerError || !drawer) {
+        alert('Drawer not found: ' + drawerLabel)
+        return
+    }
+
+    const { error } = await supabase
+        .from('components')
+        .update({ drawer_id: drawer.id })
+        .eq('id', componentId)
+
+    if (error) alert('Failed to assign drawer: ' + error.message)
+    else renderCatalog()
+}
+
+
+// ============================================================
+//  CATALOG — Manager: delete a component
+// ============================================================
+export async function deleteComponent(id) {
+    if (!confirm('Are you sure you want to delete this component?')) return
+    const { error } = await supabase.from('components').delete().eq('id', id)
+    if (error) alert('Delete failed: ' + error.message)
+    else renderCatalog()
+}
+
+
+// ============================================================
+//  CATALOG — Manager: Add New Component (LOCK TAKEN, ALLOW NEW/FREE)
+// ============================================================
+export async function addNewComponent() {
+    // 1. Fetch categories and existing drawers from Supabase
+    const { data: cats } = await supabase.from('categories').select('id, name').order('name')
+    const { data: existingDrawers } = await supabase.from('drawers').select('label, component').order('id')
+
+    // Generate category select options
+    const categoryOptions = (cats || []).map(c => `<option value="${c.id}">${c.name}</option>`).join('')
+    
+    // Create a live map of what labels are currently used
+    const occupiedMap = {}
+    if (existingDrawers) {
+        existingDrawers.forEach(d => {
+            if (d.label) {
+                occupiedMap[d.label] = d.component || 'Another Item'
+            }
+        })
+    }
+
+    // 2. Build dynamic list up to D99. If taken, lock it out completely
+    const allDrawers = Array.from({ length: 99 }, (_, i) => `D${i + 1}`)
+    const drawerSuggestions = allDrawers.map(d => {
+        const isTaken = occupiedMap[d] !== undefined
+        if (isTaken) {
+            // Unclickable/disabled options for taken drawers
+            return `<option value="${d}" disabled style="color: #aaa;">${d} (taken by: ${occupiedMap[d]})</option>`
+        }
+        // Fully clickable options for free slots
+        return `<option value="${d}">${d} [Free Slot]</option>`
+    }).join('')
+
+    // 3. Render the input form layout modal
+    const modal = document.createElement('div')
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;"
+    modal.innerHTML = `
+        <div style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow: 0px 4px 15px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; color:var(--main-blue); margin-bottom:20px;">Add New Component</h3>
+            
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Component Name:</label>
+            <input type="text" id="new-comp-name" placeholder="e.g. Resistor 470Ω, 5W" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Category:</label>
+            <select id="new-comp-cat" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px;">
+                ${categoryOptions}
+            </select>
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Starting Stock Quantity:</label>
+            <input type="number" id="new-comp-qty" value="100" min="0" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Assign Free Drawer or Type New Number:</label>
+            <input type="text" id="new-comp-drawer" list="drawer-list" placeholder="Pick a free slot or type a new code like D100" style="width:100%; padding:8px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+            <datalist id="drawer-list">
+                ${drawerSuggestions}
+            </datalist>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="cancel-new-comp" style="padding:8px 16px; background:#ccc; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Cancel</button>
+                <button id="save-new-comp" style="padding:8px 16px; background:var(--open-green, green); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Save Item</button>
+            </div>
+        </div>
+    `
+    document.body.appendChild(modal)
+
+    document.getElementById('cancel-new-comp').onclick = () => modal.remove()
+
+    document.getElementById('save-new-comp').onclick = async () => {
+        const name = document.getElementById('new-comp-name').value.trim()
+        const catId = parseInt(document.getElementById('new-comp-cat').value)
+        const qty = parseInt(document.getElementById('new-comp-qty').value) || 0
+        const typedDrawerLabel = document.getElementById('new-comp-drawer').value.trim().toUpperCase()
+
+        if (!name) {
+            alert('Please enter a component name.')
+            return
+        }
+
+        let finalDrawerId = null
+
+        if (typedDrawerLabel) {
+            // Block submissions if a user manually forces a taken drawer label
+            if (occupiedMap[typedDrawerLabel]) {
+                alert(`Error: Drawer ${typedDrawerLabel} is already taken! Please pick a free slot or type a new drawer number.`);
+                return
+            }
+
+            const { data: existingRow } = await supabase
+                .from('drawers')
+                .select('id')
+                .eq('label', typedDrawerLabel)
+                .single()
+
+            if (existingRow) {
+                finalDrawerId = existingRow.id
+            } else {
+                // Auto-generate brand-new drawer row parameters safely
+                const totalDrawersCount = (existingDrawers || []).length
+                const nextId = totalDrawersCount + 1
+                const mockRowNumber = Math.ceil(nextId / 16)
+                const mockDrawerNumber = ((nextId - 1) % 16) + 1
+                const mockLedStart = (nextId * 4) - 3
+                const mockLedEnd = nextId * 4
+
+                const { data: newDrawer, error: createDrawerError } = await supabase
+                    .from('drawers')
+                    .insert({
+                        id: nextId,
+                        label: typedDrawerLabel,
+                        component: name,
+                        row_number: mockRowNumber,
+                        "drawer number": mockDrawerNumber,
+                        led_index: `{${mockLedStart},${mockLedEnd}}` // Fixed array literal
+                    })
+                    .select()
+                    .single()
+
+                if (createDrawerError) {
+                    alert('Failed to create new drawer slot: ' + createDrawerError.message)
+                    return
+                }
+                finalDrawerId = newDrawer.id
+            }
+        }
+
+        const { error: compError } = await supabase.from('components').insert({
+            name: name,
+            category_id: catId,
+            qty: qty,
+            drawer_id: finalDrawerId
+        })
+
+        if (compError) {
+            alert('Failed to save component: ' + compError.message)
+        } else {
+            modal.remove()
+            renderCatalog()
+        }
+    }
+}
+
+
+// ============================================================
+//  CATALOG — Filter (search box + category dropdown)
+// ============================================================
+export function filterCatalog() {
+    const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
+    const selectedCat = document.getElementById('categorySelect').value
+
+    if (selectedCat !== 'all') {
+        window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
+    } else {
+        window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
+    }
+
+    renderCatalog()
+}
+
+
+// ============================================================
+//  SUBMISSION — Populate component dropdown
+// ============================================================
+export async function populateDropdown() {
+    const selector = document.getElementById('component-selector')
+    if (!selector) return
+
+    const { data: items } = await supabase
+        .from('components')
+        .select('id, name, qty')
+        .gt('qty', 0)        // Only show in-stock items
+        .order('name')
+
+    selector.innerHTML = '<option value="">-- Choose Item --</option>'
+    ;(items || []).forEach(item => {
+        selector.innerHTML += `<option value="${item.name}">${item.name} (Available: ${item.qty})</option>`
+    })
+}
+
+
+// ============================================================
+//  SUBMISSION — Add item to the request list (UI only)
+// ============================================================
+export function addItemToList(type) {
+    const container = document.getElementById('selected-items-container')
+    let itemName = ''
+    let isCustom = false
+
+    if (type === 'store') {
+        const selector = document.getElementById('component-selector')
+        itemName = selector.value
+        if (!itemName) return
+    } else {
+        const customInput = document.getElementById('custom-item-name')
+        itemName = customInput.value.trim()
+        isCustom = true
+        if (!itemName) return
+        customInput.value = ''
+    }
+
+    if (document.getElementById(`row-${itemName}`)) {
+        alert('Item already in list!')
+        return
+    }
+
+    const row      = document.createElement('div')
+    row.className  = 'item-row'
+    row.id         = `row-${itemName}`
+    const tagColor = isCustom ? '#6c757d' : 'var(--main-blue)'
+    const tagText  = isCustom ? 'EXTERNAL' : 'STORE'
+
+    row.innerHTML = `
+        <div>
+            <span style="font-weight:600;">${itemName}</span>
+            <small style="background:${tagColor}; color:white; padding:2px 6px; border-radius:4px; margin-left:8px; font-size:0.6rem;">${tagText}</small>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <label style="font-size:0.8rem;">Qty:</label>
+            <input type="number" class="qty-input" value="1" min="1">
+            <button type="button" class="btn-remove" onclick="this.parentElement.parentElement.remove()">X</button>
+        </div>
+    `
+    container.appendChild(row)
+}
+
+
+// ============================================================
+//  SUBMISSION — Submit proposal to Supabase
+// ============================================================
+export async function submitProposal(e) {
+    e.preventDefault()
+
+    const user = await getCurrentUser()
+    if (!user) { alert('You must be logged in.'); return }
+
+    // 1. Upload circuit diagram to Supabase Storage
+    const fileInput = document.getElementById('circuit-upload')
+    const file      = fileInput.files[0]
+    let diagramUrl  = null
+
+    if (file) {
+        const fileName = `${user.id}_${Date.now()}_${file.name}`
+        const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('diagrams')
+            .upload(fileName, file)
+
+        if (uploadError) {
+            alert('Diagram upload failed: ' + uploadError.message)
+            return
+        }
+
+        const { data: urlData } = supabase.storage.from('diagrams').getPublicUrl(fileName)
+        diagramUrl = urlData.publicUrl
+    }
+
+    // 2. Get supervisor ID from student's profile
+    const supervisorId = user.profile?.supervisor_id
+    if (!supervisorId) {
+        alert('No supervisor linked to your account. Please contact admin.')
+        return
+    }
+
+    // 3. Insert proposal row
+    const { data: proposal, error: propError } = await supabase
+        .from('proposals')
+        .insert({
+            student_id:        user.id,
+            supervisor_id:     supervisorId,
+            project_name:      `Project by ${user.profile.full_name}`,
+            diagram_url:       diagramUrl,
+            supervisor_status: 'Pending',
+            store_status:      'Waiting'
+        })
+        .select()
+        .single()
+
+    if (propError) {
+        alert('Submission failed: ' + propError.message)
+        return
+    }
+
+    // 4. Insert each item row into proposal_items
+    const rows = document.querySelectorAll('#selected-items-container .item-row')
+    for (const row of rows) {
+        const itemName  = row.querySelector('span').innerText.trim()
+        const qty       = parseInt(row.querySelector('.qty-input').value)
+        const isCustom  = row.querySelector('small').innerText === 'EXTERNAL'
+
+        let componentId = null
+        if (!isCustom) {
+            const { data: comp } = await supabase
+                .from('components')
+                .select('id')
+                .eq('name', itemName)
+                .single()
+            componentId = comp?.id || null
+        }
+
+        await supabase.from('proposal_items').insert({
+            proposal_id:   proposal.id,
+            component_id:  componentId,
+            custom_name:   isCustom ? itemName : null,
+            qty_requested: qty,
+            is_custom:     isCustom
+        })
+    }
+
+    alert('Proposal submitted successfully!')
+    window.location.href = 'status.html'
+}
+
+
+// ============================================================
+//  STATUS PAGE — Student views their own proposals
+// ============================================================
+export async function renderStatus() {
+    const container = document.getElementById('status-container')
+    if (!container) return
+
+    const user = await getCurrentUser()
+    if (!user) return
+
+    const { data: proposals, error } = await supabase
+        .from('proposals')
+        .select('*, proposal_items(*, components(name))')
+        .eq('student_id', user.id)
+        .order('submitted_at', { ascending: false })
+
+    if (error) {
+        container.innerHTML = `<p style="color:red;">Error loading proposals: ${error.message}</p>`
+        return
+    }
+
+    if (!proposals || proposals.length === 0) {
+        container.innerHTML = `<p style="color:#888; text-align:center; margin-top:40px;">No proposals submitted yet.</p>`
+        return
+    }
+
+    container.innerHTML = proposals.map(prop => {
+        const bagDisplay = prop.store_status === 'Done'
+            ? `<div class="bag-code-box">YOUR COLLECTION CODE: <strong>${prop.bag_code}</strong></div>`
+            : `<div class="bag-waiting">Bag is being packed...</div>`
+
+        return `
+            <div class="proposal-card" style="background:white; padding:20px; border-radius:12px; border:1px solid #eee; margin-bottom:20px;">
+                <h3>Proposal ID: ${prop.id}</h3>
+                <p style="color:#666; font-size:0.9rem;">Project: ${prop.project_name}</p>
+                <div style="display:flex; gap:15px; margin-top:10px;">
+                    <div>Supervisor: <span class="badge-${prop.supervisor_status.toLowerCase()}">${prop.supervisor_status}</span></div>
+                    <div>Store: <span class="badge-pending">${prop.store_status}</span></div>
+                </div>
+                ${prop.feedback ? `<p style="margin-top:10px; font-style:italic; color:#777;">Feedback: ${prop.feedback}</p>` : ''}
+                ${prop.supervisor_status === 'Approved' ? bagDisplay : ''}
+            </div>
+        `
+    }).join('')
+}
+
+
+// ============================================================
+//  STUDENT DASHBOARD
+// ============================================================
+export async function renderStudentDashboard() {
+    const welcome = document.getElementById('welcome-msg')
+    if (!welcome) return
+
+    const user = await getCurrentUser()
+    if (!user) return
+
+    welcome.innerText = `Welcome back, ${user.profile?.full_name || 'Student'}!`
+
+    const { data: proposals } = await supabase
+        .from('proposals')
+        .select('supervisor_status, store_status')
+        .eq('student_id', user.id)
+
+    const total    = (proposals || []).length
+    const approved = (proposals || []).filter(p => p.supervisor_status === 'Approved').length
+    const ready    = (proposals || []).filter(p => p.store_status === 'Done').length
+
+    document.getElementById('stat-active-proposals').innerText = total.toString().padStart(2, '0')
+    document.getElementById('stat-approved-items').innerText   = approved.toString().padStart(2, '0')
+    document.getElementById('stat-ready-pickup').innerText     = ready.toString().padStart(2, '0')
+
+    // Latest activity
+    const { data: latest } = await supabase
+        .from('proposals')
+        .select('id, supervisor_status, store_status')
+        .eq('student_id', user.id)
+        .order('submitted_at', { ascending: false })
+        .limit(1)
+        .single()
+
+    const activityContainer = document.getElementById('latest-activity-container')
+    if (activityContainer && latest) {
+        activityContainer.innerHTML = `
+            <h3>Latest Activity</h3>
+            <div class="activity-item">
+                <p><strong>${latest.id}</strong>: ${latest.supervisor_status} (Supervisor) | ${latest.store_status} (Store)</p>
+                <div class="progress-bar-mini">
+                    <div class="progress-fill" style="width:${latest.store_status === 'Done' ? '100%' : '50%'}"></div>
+                </div>
+            </div>
+        `
+    }
+}
+
+
+// ============================================================
+//  SUPERVISOR DASHBOARD
+// ============================================================
+export async function renderSupervisorDashboard() {
+    const pendingContainer = document.getElementById('pending-list-container')
+    if (!pendingContainer) return
+
+    const user = await getCurrentUser()
+    if (!user) return
+
+    const { data: proposals } = await supabase
+        .from('proposals')
+        .select('*, profiles!proposals_student_id_fkey(full_name)')
+        .eq('supervisor_id', user.id)
+        .order('submitted_at', { ascending: false })
+
+    const pending  = (proposals || []).filter(p => p.supervisor_status === 'Pending')
+    const approved = (proposals || []).filter(p => p.supervisor_status === 'Approved')
+    const declined = (proposals || []).filter(p => p.supervisor_status === 'Declined')
+    const history  = (proposals || []).filter(p => p.supervisor_status !== 'Pending')
+
+    document.getElementById('sup-stat-pending').innerText  = pending.length.toString().padStart(2, '0')
+    document.getElementById('sup-stat-approved').innerText = approved.length.toString().padStart(2, '0')
+    document.getElementById('sup-stat-declined').innerText = declined.length.toString().padStart(2, '0')
+
+    // Pending action list
+    pendingContainer.innerHTML = ''
+    if (pending.length === 0) {
+        pendingContainer.innerHTML = `<p style="color:#888;">No pending proposals to review.</p>`
+    } else {
+        pending.forEach(p => {
+            pendingContainer.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; background:#f9f9f9; margin-bottom:10px; border-radius:8px;">
+                    <div>
+                        <p style="margin:0; font-weight:600;">${p.profiles?.full_name || 'Unknown'}</p>
+                        <small>${p.id}</small>
+                    </div>
+                    <a href="review.html?id=${p.id}" class="btn-role" style="font-size:0.7rem; padding:5px 10px;">REVIEW</a>
+                </div>
+            `
+        })
+    }
+
+    // Recent decision history table
+    const historyBody = document.getElementById('history-table-body')
+    if (historyBody) {
+        historyBody.innerHTML = history.length === 0
+            ? `<tr><td colspan="3" style="color:#888; text-align:center;">No decision history yet.</td></tr>`
+            : history.map(p => `
+                <tr>
+                    <td>${p.profiles?.full_name || '—'}</td>
+                    <td>${p.id}</td>
+                    <td><span class="status-badge badge-${p.supervisor_status.toLowerCase()}">${p.supervisor_status}</span></td>
+                </tr>
+            `).join('')
+    }
+}
+
+
+// ============================================================
+//  REVIEW PAGE — Load pending proposals list
+// ============================================================
+export async function renderMasterStudentList(currentSelectedId = null) {
+    const listContainer  = document.getElementById('master-student-list')
+    const pendingCount   = document.getElementById('pending-count')
+    if (!listContainer) return
+
+    const user = await getCurrentUser()
+    if (!user) return
+
+    const { data: pending } = await supabase
+        .from('proposals')
+        .select('id, project_name, profiles!proposals_student_id_fkey(full_name), proposal_items(id)')
+        .eq('supervisor_id', user.id)
+        .eq('supervisor_status', 'Pending')
+
+    if (pendingCount) pendingCount.innerText = (pending || []).length
+
+    listContainer.innerHTML = ''
+
+    if (!pending || pending.length === 0) {
+        listContainer.innerHTML = `<p style="color:#888; font-size:0.9rem; text-align:center;">No proposals pending.</p>`
+        return
+    }
+
+    pending.forEach(prop => {
+        const item     = document.createElement('div')
+        item.className = `student-item ${currentSelectedId === prop.id ? 'active' : ''}`
+        item.onclick   = () => loadProposalDetails(prop.id)
+        item.innerHTML = `
+            <p style="margin:0; font-weight:600;">${prop.profiles?.full_name || 'Unknown'}</p>
+            <small>${prop.project_name} | ${prop.proposal_items?.length || 0} Items</small>
+        `
+        listContainer.appendChild(item)
+    })
+}
+
+
+// ============================================================
+//  REVIEW PAGE — Load proposal detail into right panel
+// ============================================================
+export async function loadProposalDetails(proposalId) {
+    const { data: prop } = await supabase
+        .from('proposals')
+        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name))')
+        .eq('id', proposalId)
+        .single()
+
+    if (!prop) return
+
+    document.getElementById('current-student-name').innerText  = prop.profiles?.full_name || '—'
+    document.getElementById('current-proposal-id').innerText   = prop.id
+    document.getElementById('diagram-preview').src             = prop.diagram_url || ''
+
+    const tableBody = document.getElementById('component-table-body')
+    tableBody.innerHTML = ''
+    prop.proposal_items.forEach(item => {
+        const name = item.is_custom ? item.custom_name : item.components?.name || '—'
+        tableBody.innerHTML += `
+            <tr>
+                <td>${name}</td>
+                <td>${item.qty_requested}</td>
+                <td><span class="status-badge badge-approved" style="font-size:0.7rem;">${item.is_custom ? 'External' : 'Verified'}</span></td>
+            </tr>
+        `
+    })
+
+    // Store the active ID for the decision handler
+    window._activeProposalId = proposalId
+    renderMasterStudentList(proposalId)
+}
+
+
+// ============================================================
+//  REVIEW PAGE — Approve or Decline
+// ============================================================
+export async function handleDecision(decision) {
+    const proposalId = window._activeProposalId
+    if (!proposalId) return
+
+    const feedback = document.getElementById('feedback-comment').value
+
+    if (decision === 'Declined' && feedback.trim() === '') {
+        alert('Please provide feedback or a reason for declination.')
+        return
+    }
+
+    const { error } = await supabase
+        .from('proposals')
+        .update({
+            supervisor_status: decision,
+            feedback:          feedback,
+            reviewed_at:       new Date()
+        })
+        .eq('id', proposalId)
+
+    if (error) {
+        alert('Failed to save decision: ' + error.message)
+        return
+    }
+
+    window._activeProposalId = null
+    document.getElementById('feedback-comment').value = ''
+    alert(`Proposal has been ${decision}.`)
+    renderMasterStudentList()
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Render both tables
+// ============================================================
+export async function renderDispenseTables() {
+    const approvedBody = document.getElementById('approved-proposals-body')
+    const readyBody    = document.getElementById('collection-ready-body')
+    if (!approvedBody || !readyBody) return
+
+    const { data: proposals } = await supabase
+        .from('proposals')
+        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(id)')
+
+    // Table 1: Approved by supervisor, store hasn't packed yet
+    const approved = (proposals || []).filter(p =>
+        p.supervisor_status === 'Approved' && p.store_status === 'Waiting'
+    )
+    approvedBody.innerHTML = approved.length === 0
+        ? `<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No proposals waiting to be packed.</td></tr>`
+        : approved.map(p => `
+            <tr>
+                <td>${p.profiles?.full_name || '—'}</td>
+                <td>${p.project_name}</td>
+                <td>${p.proposal_items?.length || 0} items</td>
+                <td><button onclick="openProposal('${p.id}')" class="btn-role" style="padding:5px 10px;">OPEN</button></td>
+            </tr>
+        `).join('')
+
+    // Table 2: Store marked Done, waiting for student pickup
+    const ready = (proposals || []).filter(p => p.store_status === 'Done')
+    readyBody.innerHTML = ready.length === 0
+        ? `<tr><td colspan="4" style="text-align:center; color:#999; padding:20px;">No bags ready for collection.</td></tr>`
+        : ready.map(p => `
+            <tr>
+                <td>${p.profiles?.full_name || '—'}</td>
+                <td><span class="code-tag">${p.bag_code}</span></td>
+                <td><span class="status-badge badge-approved">READY</span></td>
+                <td><button onclick="markCollected('${p.id}')" class="btn-role" style="background:#333; color:white; border:none;">COLLECTED</button></td>
+            </tr>
+        `).join('')
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Open proposal modal
+// ============================================================
+export async function openProposal(id) {
+    window._activeDispenseId = id
+
+    const { data: prop } = await supabase
+        .from('proposals')
+        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name, drawers(label, "drawer number", led_index)))')
+        .eq('id', id)
+        .single()
+
+    document.getElementById('modal-student-name').innerText = prop.profiles?.full_name || '—'
+
+    const listBody = document.getElementById('modal-item-list')
+    listBody.innerHTML = prop.proposal_items.map(item => {
+        const name     = item.is_custom ? item.custom_name : item.components?.name || '—'
+        const drawer   = item.components?.drawers
+        const rackCode = (drawer && drawer.label) ? drawer.label : 'N/A'
+        const ledIndex = (drawer && drawer.led_index !== undefined) ? drawer.led_index : null
+
+        // SEARCH button always shows — disabled if no drawer assigned
+        const searchBtn = (ledIndex !== null && rackCode !== 'N/A')
+            ? `<button onclick="sendToESP32(${ledIndex}, '${rackCode}')" 
+                       class="btn-role" 
+                       style="background:var(--open-green); color:white; border:none; padding:5px 12px;">SEARCH</button>`
+            : `<button class="btn-role" 
+                       style="background:#aaa; color:white; border:none; padding:5px 12px; cursor:not-allowed;" 
+                       disabled>SEARCH</button>`
+
+        return `
+            <tr>
+                <td>${name}</td>
+                <td>${item.qty_requested}</td>
+                <td><span style="color:#ff9800; font-weight:600;">${rackCode}</span></td>
+                <td>${searchBtn}</td>
+            </tr>
+        `
+    }).join('')
+
+    document.getElementById('proposal-modal').style.display = 'block'
+    document.getElementById('done-btn').onclick = () => finalizePacking(id)
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Close modal
+// ============================================================
+export function closeModal() {
+    document.getElementById('proposal-modal').style.display = 'none'
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Highlight all drawers for active proposal
+// ============================================================
+export async function highlightAllDrawers() {
+    const id = window._activeDispenseId
+    if (!id) return
+
+    const { data: prop } = await supabase
+        .from('proposals')
+        .select('proposal_items(components(name, drawers(label, led_index)))')
+        .eq('id', id)
+        .single()
+
+    const items = prop?.proposal_items || []
+    const drawerList = items
+        .map(i => i.components?.drawers?.label)
+        .filter(Boolean)
+
+    if (drawerList.length === 0) {
+        alert('No drawers assigned to any component in this proposal.')
+        return
+    }
+
+    alert('Drawers to visit: ' + drawerList.join(', '))
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Send LED signal to ESP32 via Supabase
+//  The ESP32 subscribes to Supabase Realtime on the
+//  'store_settings' table and reads the led_target column.
+// ============================================================
+export async function sendToESP32(ledIndex, rackCode) {
+    // We repurpose store_settings to broadcast the LED target
+    // The ESP32 listens to Realtime changes on this row
+    const { error } = await supabase
+        .from('store_settings')
+        .update({ led_target: ledIndex, updated_at: new Date() })
+        .eq('id', 1)
+
+    if (error) {
+        alert('Failed to send signal: ' + error.message)
+    } else {
+        alert(`Signal sent to Rack ${rackCode} (LED ${ledIndex}). LED should be blinking.`)
+    }
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Finalize packing, generate bag code
+// ============================================================
+export async function finalizePacking(id) {
+    const { data: prop } = await supabase
+        .from('proposals')
+        .select('proposal_items(qty_requested, components(id, qty, name))')
+        .eq('id', id)
+        .single()
+
+    // Check stock and deduct
+    let allInStock = true
+    for (const item of prop.proposal_items) {
+        if (!item.components || item.components.qty < item.qty_requested) {
+            allInStock = false
+            break
+        }
+    }
+
+    if (!allInStock) {
+        // Auto-reject if stock ran out
+        await supabase.from('proposals').update({
+            supervisor_status: 'Declined',
+            feedback: 'AUTO-REJECT: Some components went out of stock during processing.'
+        }).eq('id', id)
+
+        alert('STOCK DEPLETED: Proposal automatically rejected and student notified.')
+    } else {
+        // Deduct stock for each item
+        for (const item of prop.proposal_items) {
+            await supabase
+                .from('components')
+                .update({ qty: item.components.qty - item.qty_requested })
+                .eq('id', item.components.id)
+        }
+
+        const bagCode = 'BAG-' + Math.floor(1000 + Math.random() * 9000)
+
+        await supabase.from('proposals').update({
+            store_status:  'Done',
+            bag_code:      bagCode,
+            dispensed_at:  new Date()
+        }).eq('id', id)
+
+        alert(`Success! Bag Generated: ${bagCode}`)
+    }
+
+    document.getElementById('proposal-modal').style.display = 'none'
+    renderDispenseTables()
+}
+
+
+// ============================================================
+//  DISPENSE PAGE — Mark as collected
+// ============================================================
+export async function markCollected(id) {
+    const { error } = await supabase
+        .from('proposals')
+        .update({ store_status: 'Collected' })
+        .eq('id', id)
+
+    if (error) alert('Failed to update: ' + error.message)
+    else {
+        alert('Hand-over complete. Transaction saved to history.')
+        renderDispenseTables()
+    }
+}
+
+
+// ============================================================
+//  HISTORY PAGE
+// ============================================================
+export async function renderEnhancedHistory() {
+    const propBody  = document.getElementById('history-proposal-body')
+    const dispBody  = document.getElementById('history-dispense-body')
+    if (!propBody || !dispBody) return
+
+    const { data: proposals } = await supabase
+        .from('proposals')
+        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(qty_requested, components(name))')
+        .order('submitted_at', { ascending: false })
+
+    // Proposal decisions table
+    propBody.innerHTML = (proposals || []).map(p => `
+        <tr>
+            <td>${new Date(p.submitted_at).toLocaleDateString('en-MY')}</td>
+            <td style="font-weight:600;">${p.profiles?.full_name || '—'}</td>
+            <td>${p.project_name}</td>
+            <td><span class="status-badge badge-${p.supervisor_status.toLowerCase()}">${p.supervisor_status}</span></td>
+            <td style="font-style:italic; color:#777;">${p.feedback || '—'}</td>
+        </tr>
+    `).join('')
+
+    // Dispense logs table (only Done or Collected)
+    const dispensed = (proposals || []).filter(p => p.store_status === 'Done' || p.store_status === 'Collected')
+
+    dispBody.innerHTML = dispensed.length === 0
+        ? `<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No items have been dispensed yet.</td></tr>`
+        : dispensed.map(p => {
+            const itemNames = p.proposal_items.map(i => i.components?.name || 'Custom').join(', ')
+            return `
+                <tr>
+                    <td>${p.dispensed_at ? new Date(p.dispensed_at).toLocaleDateString('en-MY') : '—'}</td>
+                    <td style="font-weight:600;">${p.profiles?.full_name || '—'}</td>
+                    <td><span class="code-tag">${p.bag_code || '—'}</span></td>
+                    <td>${itemNames}</td>
+                    <td><span class="status-badge badge-approved">FULFILLED</span></td>
+                </tr>
+            `
+        }).join('')
+
+    // Summary stats
+    let totalOut = 0
+    dispensed.forEach(p => p.proposal_items.forEach(i => totalOut += i.qty_requested))
+
+    const { data: components } = await supabase.from('components').select('qty')
+    let totalIn = 0
+    ;(components || []).forEach(c => totalIn += c.qty)
+
+    const totalOutEl = document.getElementById('total-out')
+    const totalInEl  = document.getElementById('total-in')
+    if (totalOutEl) totalOutEl.innerText = totalOut
+    if (totalInEl)  totalInEl.innerText  = totalIn
+}
+
+
+// ============================================================
+//  REGISTER PAGE — Show/hide role-specific fields
+// ============================================================
+export function showFields(role, clickedBtn) {
+    // Save selected role so the form submit can read it
+    localStorage.setItem("selectedRole", role)
+
+    document.getElementById("reg-form").classList.remove("hidden")
+    document.getElementById("fields-student").classList.add("hidden")
+    document.getElementById("fields-supervisor").classList.add("hidden")
+
+    if (role === "student")    document.getElementById("fields-student").classList.remove("hidden")
+    if (role === "supervisor") document.getElementById("fields-supervisor").classList.remove("hidden")
+
+    // Highlight active role button
+    document.querySelectorAll(".role-group .btn-role").forEach(btn => btn.classList.remove("active"))
+    if (clickedBtn) clickedBtn.classList.add("active")
+}
+
+
+// ============================================================
+//  MANAGER DASHBOARD — Inventory chart data
+// ============================================================
+export async function getComponentsForChart() {
+    const { data } = await supabase
+        .from('components')
+        .select('name, qty')
+        .order('name')
+    return data || []
+}
+
+
+// ============================================================
+//  BOOT — Runs on every page load
+// ============================================================
+window.addEventListener('DOMContentLoaded', async () => {
+    // Make key functions globally accessible from HTML onclick attributes
+    window.toggleSidebar             = toggleSidebar
+    window.toggleStoreGlobal         = toggleStoreGlobal
+    window.logout                    = logout
+    window.filterCatalog             = filterCatalog
+    window.filterSidebarCategories   = filterSidebarCategories
+    window.addItemToList             = addItemToList
+    window.updateComponent           = updateComponent
+    window.deleteComponent           = deleteComponent
+    window.addNewComponent           = addNewComponent
+    window.showFields                = showFields
+    window.handleDecision            = handleDecision
+    window.loadProposalDetails       = loadProposalDetails
+    window.openProposal              = openProposal
+    window.sendToESP32               = sendToESP32
+    window.markCollected             = markCollected
+    window.finalizePacking           = finalizePacking
+    window.assignDrawer              = assignDrawer
+    window.highlightAllDrawers       = highlightAllDrawers
+    window.closeModal                = closeModal
+
+    // 0. Session validity check — runs on every page load
+    // If the user was deleted from Supabase, force logout immediately
+    const { data: { user: activeUser } } = await supabase.auth.getUser()
+    if (activeUser) {
+        const { data: activeProfile, error: sessionError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('id', activeUser.id)
+            .single()
+
+        if (sessionError || !activeProfile) {
+            // User exists in auth session but not in profiles — account was deleted
+            await supabase.auth.signOut()
+            localStorage.clear()
+            alert('Your account has been removed. Please contact admin.')
+            window.location.href = 'login.html'
+            return
+        }
+    }
+
+    // 1. Global on every page
+    await initializeGlobalBanner()
+    await renderGlobalNavigation()
+
+    // 2. Page-specific
+    if (document.getElementById('catalog-grid'))         await renderCatalog()
+    if (document.getElementById('component-selector'))   await populateDropdown()
+    if (document.getElementById('welcome-msg'))          await renderStudentDashboard()
+    if (document.getElementById('pending-list-container')) await renderSupervisorDashboard()
+    if (document.getElementById('master-student-list'))  await renderMasterStudentList()
+    if (document.getElementById('status-container'))     await renderStatus()
+    if (document.getElementById('approved-proposals-body')) await renderDispenseTables()
+    if (document.getElementById('history-proposal-body'))   await renderEnhancedHistory()
+
+    // Login form
+    const loginForm = document.getElementById('login-form')
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const email    = document.getElementById('login-email').value
+            const password = document.getElementById('login-password').value
+            await handleLogin(email, password)
+        })
+    }
+
+    // Registration form
+    const regForm = document.getElementById('reg-form')
+    if (regForm) {
+        regForm.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const fullName      = document.querySelector('[placeholder="Full Name"]').value
+            const email         = document.querySelector('[placeholder="Email"]').value
+            const password      = document.querySelector('[placeholder="Password"]').value
+            const role          = localStorage.getItem('selectedRole') || 'student'
+            const matricNumber   = document.querySelector('[placeholder="Student Matrik Number"]')?.value
+            const supervisorCode = role === 'student'
+                ? document.querySelector('[placeholder="Supervisor Auth Code (Ask your supervisor)"]')?.value
+                : document.querySelector('[placeholder="Create Your Exclusive Auth Code (Share this with your students)"]')?.value
+            await handleRegister(fullName, email, password, role, matricNumber, supervisorCode)
+        })
+    }
+
+    // Submission form
+    const subForm = document.getElementById('submission-form')
+    if (subForm) {
+        subForm.addEventListener('submit', submitProposal)
+    }
+
+    // Manager dashboard chart
+    if (document.getElementById('inventoryChart')) {
+        const items = await getComponentsForChart()
+        const ctx   = document.getElementById('inventoryChart').getContext('2d')
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels:   items.map(i => i.name),
+                datasets: [{
+                    label:           'Quantity Available',
+                    data:            items.map(i => i.qty),
+                    backgroundColor: 'rgba(52, 152, 219, 0.7)'
+                }]
+            }
+        })
+    }
+})

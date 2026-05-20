@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | Catalog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="status-banner" class="status-banner">
+        STORE STATUS: <span id="status-text">CHECKING...</span>
+    </div>
+
+    <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.5rem;">☰</div>
+            <div class="logo">SMARTPICK</div>
+        </div>
+        <nav id="top-nav-links">
+            <a href="index.html">Home</a>
+            <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="side-panel" id="side-panel">
+        <nav id="side-nav">
+            </nav>
+    </div>
+    
+    <main class="catalog-container">
+        <div class="catalog-header">
+            <h2 style="color: var(--main-blue);">SMARTPICK CATALOG</h2>
+            <div class="search-box">
+                <input type="text" id="catalogSearch" placeholder="Search components or categories..." onkeyup="filterCatalog()">
+                <select id="categorySelect" onchange="filterCatalog()">
+                    <option value="all">All Categories</option>
+                    </select>
+            </div>
+        </div>
+
+        <div id="catalog-grid" class="catalog-grid"></div>
+    </main>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

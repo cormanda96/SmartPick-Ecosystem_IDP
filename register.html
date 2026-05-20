@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | Register</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="status-banner" class="status-banner">
+        STORE STATUS: <span id="status-text">CHECKING...</span>
+    </div>
+    
+    <header class="main-header">
+        <div class="logo">SMARTPICK</div>
+        <nav id="top-nav-links"></nav>
+    </header>
+
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2 style="color: var(--main-blue);">CREATE ACCOUNT</h2>
+            <p>Select your role to start:</p>
+
+            <div class="role-group">
+                <button type="button" class="btn-role" onclick="showFields('student', this)">Student</button>
+                <button type="button" class="btn-role" onclick="showFields('supervisor', this)">Supervisor</button>
+                <button type="button" class="btn-role" onclick="showFields('manager', this)">Manager</button>
+            </div>
+
+            <form id="reg-form" class="hidden" style="margin-top: 20px;">
+                <input type="text" placeholder="Full Name" required>
+                <input type="email" placeholder="Email" required>
+                <input type="password" placeholder="Password" required>
+
+                <!-- Student-specific fields -->
+                <div id="fields-student" class="hidden">
+                    <input type="text" placeholder="Student Matrik Number">
+                    <input type="text" placeholder="Supervisor Auth Code (Ask your supervisor)">
+                </div>
+
+                <!-- Supervisor-specific fields -->
+                <div id="fields-supervisor" class="hidden">
+                    <input type="text" placeholder="Create Your Exclusive Auth Code (Share this with your students)">
+                </div>
+
+                <button type="submit" class="btn-primary-full" style="margin-top: 15px;">REGISTER</button>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="status-banner" class="status-banner">
+        STORE STATUS: <span id="status-text">CHECKING...</span>
+    </div>
+
+    <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.5rem;">☰</div>
+            <div class="logo">SMARTPICK</div>
+        </div>
+        <nav id="top-nav-links">
+            <a href="index.html">Home</a>
+            <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="side-panel" id="side-panel">
+        <nav id="side-nav"></nav>
+    </div>
+
+    <main id="main-content" class="main-content">
+    <section class="dashboard-header">
+        <h2 style="color: var(--main-blue); margin-bottom: 5px;">STUDENT DASHBOARD</h2>
+        <p id="welcome-msg" style="color: #666;">Loading your project data...</p>
+    </section>
+
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <span id="stat-active-proposals" class="stat-value">0</span>
+            <span class="stat-label">Active Proposals</span>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid var(--open-green);">
+            <span id="stat-approved-items" class="stat-value">0</span>
+            <span class="stat-label">Items Approved</span>
+        </div>
+        <div class="stat-card" style="border-top: 4px solid var(--main-blue);">
+            <span id="stat-ready-pickup" class="stat-value">0</span>
+            <span class="stat-label">Ready for Pickup</span>
+        </div>
+    </div>
+
+    <div class="dashboard-details">
+        <div class="recent-activity" id="latest-activity-container">
+            <h3>Latest Activity</h3>
+            </div>
+        
+        <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <a href="submission.html" class="btn-primary-full" style="text-align: center; text-decoration: none; margin-bottom: 10px;">New Request</a>
+            <a href="catalog.html" class="btn-role" style="display: block; text-align: center; text-decoration: none;">View Catalog</a>
+        </div>
+    </div>
+</main>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
+

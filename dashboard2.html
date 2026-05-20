@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | Supervisor Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="status-banner" class="status-banner">STORE STATUS: <span id="status-text">OPEN</span></div>
+
+    <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.5rem;">☰</div>
+            <div class="logo">SMARTPICK</div>
+        </div>
+        <nav id="top-nav-links">
+            <a href="index.html">Home</a>
+            <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="side-panel" id="side-panel">
+        <nav id="side-nav"></nav>
+    </div>
+
+    <main id="main-content" class="main-content">
+        <h2 style="color: var(--main-blue); margin-bottom: 5px;">SUPERVISOR DASHBOARD</h2>
+        <p style="color: #666; margin-bottom: 30px;">Reviewing proposals for Computer Engineering projects.</p>
+
+        <div class="dashboard-grid">
+            <div class="stat-card" style="border-top: 4px solid #FFC107;">
+                <span id="sup-stat-pending" class="stat-value">0</span>
+                <span class="stat-label">Pending Reviews</span>
+            </div>
+            <div class="stat-card" style="border-top: 4px solid var(--open-green);">
+                <span id="sup-stat-approved" class="stat-value">0</span>
+                <span class="stat-label">Total Approved</span>
+            </div>
+            <div class="stat-card" style="border-top: 4px solid var(--closed-red);">
+                <span id="sup-stat-declined" class="stat-value">0</span>
+                <span class="stat-label">Total Declined</span>
+            </div>
+        </div>
+
+        <div class="dashboard-lower-grid" style="display: flex; gap: 20px; margin-top: 30px;">
+            <div class="activity-box" style="flex: 2; background: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd;">
+                <h3 style="font-size: 1rem; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">ACTION REQUIRED</h3>
+                <div id="pending-list-container">
+                    </div>
+            </div>
+
+            <div class="action-box" style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+                <a href="review.html" class="btn-primary-full" style="text-align: center; text-decoration: none;">Go to Review Page</a>
+                <a href="catalog.html" class="btn-role" style="text-align: center; text-decoration: none; width: 100%; box-sizing: border-box;">Check Store Inventory</a>
+            </div>
+        </div>
+    </main>
+
+    <div class="dashboard-details" style="display: flex; gap: 20px; margin-top: 30px;">
+    
+    <div class="activity-box" style="flex: 1; background: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd;">
+        <h3>Pending Summary</h3>
+        </div>
+
+        <div class="history-box" style="flex: 2; background: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd;">
+            <h3 style="font-size: 1rem; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;">RECENT DECISION HISTORY</h3>
+            <table class="proposal-table" style="width: 100%; font-size: 0.85rem;">
+                <thead><tr><th>Student</th><th>Proposal ID</th><th>Decision</th></tr></thead>
+                <tbody id="history-table-body">
+                    </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

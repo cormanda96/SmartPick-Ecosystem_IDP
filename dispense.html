@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartPick | Dispense Hub</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 5% auto; padding: 25px; width: 60%; border-radius: 12px; }
+        .rack-btn { background: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="status-banner" class="status-banner">STORE STATUS: <span id="status-text">OPEN</span></div>
+    <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.5rem;">☰</div>
+            <div class="logo">SMARTPICK</div>
+        </div>
+        <nav id="top-nav-links"><a href="#" onclick="logout()" class="logout-btn">Log Out</a></nav>
+    </header>
+
+    <div class="side-panel" id="side-panel"><nav id="side-nav"></nav></div>
+
+    <main class="main-content">
+        <h2 style="color: var(--main-blue); margin-bottom: 25px;">COMPONENT DISPENSING HUB</h2>
+
+        <div class="history-card">
+            <h3>   NEW APPROVED PROPOSALS (WAITING FOR PACKING)</h3>
+            <table class="history-table" style="width: 100%;">
+                <thead>
+                        <tr>
+                        <th>Student</th>
+                        <th>Project</th>
+                        <th>Requested Items</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="approved-proposals-body">
+                    </tbody>
+            </table>
+        </div>
+
+        <div class="history-card" style="margin-top: 30px;">
+        <h3>  READY FOR COLLECTION (BAG GENERATED)</h3>
+            <table class="history-table" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Bag Code</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="collection-ready-body">
+                    </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="proposal-modal" class="modal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between;">
+                <h3 id="modal-student-name">Proposal Items</h3>
+                <button onclick="closeModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <hr>
+            <table class="history-table">
+                <thead><tr><th>Component</th><th>Qty</th><th>Rack Info</th><th>Action</th></tr></thead>
+                <tbody id="modal-item-list"></tbody>
+            </table>
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button id="done-btn" class="btn-role" style="background: var(--open-green); color:white; border:none;">DONE & GENERATE BAG</button>
+                <button id="search-all-btn" class="btn-role" style="background: var(--open-green); color:white; border:none;" onclick="highlightAllDrawers()">SEARCH ALL</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

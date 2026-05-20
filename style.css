@@ -1,0 +1,528 @@
+/* style.css */
+:root {
+  /* Your Tri-color Palette */
+  --main-blue: #0077B6;      /* Main color for header/buttons */
+  --light-blue: #ADE8F4;     /* Secondary for backgrounds */
+  --btn-started-blue: #A2D9F3; /* Light, soft blue for the filled button */
+  --btn-outline-green: #EDFDF8; /* Pale, mint-green for the outline button */
+  --text-dark: #333333;
+  --white: #FFFFFF;          /* Pure white for text/body */
+  
+  /* Status Colors */
+  --open-green: #28a745;
+  --closed-red: #dc3545;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Poppins', sans-serif; 
+  background-color: var(--white);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* We use this to make the banner look professional */
+.status-banner {
+  text-align: center;
+  padding: 5px;
+  font-weight: bold;
+  color: white;
+  transition: background-color 0.5s ease; /* Makes color change smooth */
+}
+
+.main-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 30px;
+    background-color: var(--main-blue);
+    color: white;
+}
+
+.main-header nav {
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+.main-header nav a {
+    display: inline-block; 
+    color: #FFFFFF !important; /* Force white color */
+    text-decoration: none;
+    padding: 5px 10px;
+    margin-left: 20px;
+    cursor: pointer !important; /* Forces the hand icon */
+}
+
+.main-header nav a:hover {
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+/* Sidebar specifically for internal pages */
+.side-panel {
+    width: 200px;
+    height: 100vh;
+    background-color: #13c5c5;
+    border-right: 1px solid #e0e0e0;
+    position: fixed;
+    left: -260px; /* Hidden by default */
+    top: 0;
+    padding-top: 100px; /* Leave room for header */
+    transition: 0.3s ease; /* Smooth slide */
+    z-index: 999;
+}
+
+.side-panel.open {
+    left: 0;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 15px 25px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.sidebar-link:hover {
+    background-color: var(--light-blue);
+    color: var(--main-blue);
+}
+
+.sidebar-dropdown {
+    width: 100%;
+}
+
+.dropdown-btn {
+    width: 100%;
+    padding: 15px;
+    background: none;
+    border: none;
+    text-align: left;
+    color: var(--text-dark);
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-container {
+    display: none; /* Hidden by default */
+    background-color: #f9f9f9;
+    max-height: 400px; /* Limits size so it doesn't break layout */
+    overflow-y: auto; /* Adds scrollbar if list is too long */
+    border-bottom: 2px solid var(--main-blue);
+}
+
+.dropdown-container.show {
+    display: block; /* Pushes other links down when visible */
+}
+
+.sub-link {
+    padding: 10px 25px;
+    font-size: 0.85rem;
+    color: #666;
+    display: block;
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+.sub-link:hover {
+    background-color: #e3f2fd;
+    color: var(--main-blue);
+    padding-left: 30px;
+}
+
+/* Ensure main content moves or darkens when sidebar is open */
+.main-content {
+    transition: margin-left 0.3s ease;
+    padding: 20px;
+}
+
+.main-content.shifted {
+    margin-left: 250px; /* Optional: push content right when menu is open */
+}
+
+.logout-btn {
+    background: rgba(255,255,255,0.2);
+    padding: 5px 15px;
+    border-radius: 5px;
+}
+
+/* Push content to the right ONLY if sidebar exists */
+.body-with-sidebar {
+    padding-left: 290px; /* Width of sidebar + some gap */
+}
+
+/* Fix the last closing bracket - make sure there is only one */
+.stock-tag {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 5px;
+}
+
+/* Perfect Centered Hero Section */
+.home-hero {
+    flex: 1; /* Pushes content down slightly from the header */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 0 20px;
+    margin-top: -50px; /* Adjusts the vertical center slightly */
+}
+
+/* Title Block: Exact styling from image */
+.title-container {
+    margin-bottom: 25px; /* Spacing between title and description */
+}
+
+.main-serif-title {
+    /* Uses the Playfair serif font */
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: 3rem; /* Precise large font size */
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.sub-condensed-title {
+    /* Uses a clean, condensed styling from screenshot */
+    font-weight: 400;
+    font-size: 1.5rem;
+    color: var(--text-dark);
+    letter-spacing: 2px; /* Adds space between letters for a clean look */
+    margin: 5px 0 0 0;
+}
+
+/* Description Text */
+.description-text {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    max-width: 600px; /* Limits paragraph width for readability */
+    margin: 0 0 40px 0; /* Spacing before buttons */
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    gap: 30px; /* Spacing between the two buttons */
+}
+
+/* Base style for both buttons */
+.btn-started, .btn-learn-more {
+    display: inline-block;
+    padding: 15px 40px; /* Button dimensions */
+    border-radius: 20px; /* Distinct, rounded button shape */
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    letter-spacing: 1px;
+    color: var(--text-dark);
+    /* Exact border width and color from image */
+    border: 2px solid #000000; 
+}
+
+/* "Started" Button: Exact filled blue color */
+.btn-started {
+    background-color: var(--btn-started-blue);
+}
+
+/* "Learn More" Button: Exact outline and pale green background */
+.btn-learn-more {
+    background-color: var(--btn-outline-green);
+}
+
+/* Subtle hover effects */
+.btn-started:hover, .btn-learn-more:hover {
+    transform: translateY(-2px); /* Lifts the button slightly on hover */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+/* homepage 
+
+/* LOG IN PART */ 
+
+.btn-primary-full {
+    width: 100%;
+    background-color: var(--main-blue);
+    color: white;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-primary-full:hover {
+    background-color: #005f91; /* Slightly darker blue on hover */
+}
+
+/* Ensure the auth-box looks consistent */
+.auth-box h2 {
+    margin-top: 0;
+    letter-spacing: 1px;
+}
+
+/* REGISTER PART
+
+/* Auth Layout */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.auth-box {
+    background-color: var(--light-blue);
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.role-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.btn-role {
+    padding: 8px 15px;
+    border: 2px solid var(--main-blue);
+    background: white;
+    color: var(--main-blue);
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.btn-role:hover, .btn-role.active {
+    background: var(--main-blue);
+    color: white;
+}
+
+/* Form Inputs */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box; /* Crucial for alignment */
+}
+
+.hidden { display: none; }
+
+/* catalog
+
+/* Catalog Grid Layout */
+.catalog-container { padding: 40px; }
+
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Individual Component Card */
+.component-card {
+    background-color: white;
+    border: 2px solid var(--light-blue);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.component-card h3 { color: var(--main-blue); margin: 10px 0; }
+
+/* The "Grey Out" Logic */
+.out-of-stock {
+    background-color: #f0f0f0;
+    border-color: #ddd;
+    opacity: 0.6;
+    filter: grayscale(1); /* Makes the card look grey */
+    pointer-events: none; /* Student cannot click it */
+}
+
+.stock-tag {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 5px;
+}
+
+/* proposal send part */
+
+.upload-section input[type="file"] {
+    background: white;
+    border: 2px dashed var(--main-blue);
+    padding: 20px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+
+.upload-section input[type="file"]:hover {
+    background-color: var(--btn-outline-green);
+}
+
+.selection-section select {
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+/* style.css */
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+    border-left: 4px solid var(--main-blue);
+}
+
+.qty-input {
+    width: 60px !important; /* Force small width for numbers */
+    margin: 0 !important;
+    padding: 5px !important;
+    text-align: center;
+}
+
+.btn-remove {
+    background: none;
+    border: none;
+    color: var(--closed-red);
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* status proposal */
+
+/* style.css */
+.bag-code-box {
+    margin-top: 20px;
+    background-color: #e3f2fd;
+    border: 3px dashed var(--main-blue);
+    padding: 20px;
+    text-align: center;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    color: var(--main-blue);
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.bag-waiting {
+    margin-top: 15px;
+    color: #856404;
+    background-color: #fff3cd;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.badge-approved { color: var(--open-green); font-weight: bold; }
+.badge-declined { color: var(--closed-red); font-weight: bold; }
+.badge-pending { color: #666; font-weight: bold; }
+
+/* Dashboard Student */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 25px;
+}
+
+.stat-card {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.stat-value { font-size: 2.5rem; font-weight: 700; color: var(--main-blue); display: block; }
+.stat-label { font-size: 0.8rem; color: #777; text-transform: uppercase; }
+
+.dashboard-details { display: flex; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
+.recent-activity { flex: 2; background: white; padding: 20px; border-radius: 12px; border: 1px solid #eee; }
+.quick-actions { flex: 1; min-width: 250px; }
+
+.progress-bar-mini { background: #eee; height: 8px; border-radius: 4px; margin-top: 10px; overflow: hidden; }
+.progress-fill { background: var(--main-blue); height: 100%; transition: 0.5s; }
+
+/* manager button in catalog part */
+
+.mgr-input-name {
+    width: 100%;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 5px;
+    margin-bottom: 5px;
+}
+
+.mgr-input-qty {
+    width: 60px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+/* component student (dispense) */
+
+.history-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.history-table th {
+    text-align: left;
+    padding: 12px;
+    background: #f4f4f4;
+    border-bottom: 2px solid #ddd;
+}
+
+.history-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+}

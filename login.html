@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="status-banner" class="status-banner">
+        STORE STATUS: <span id="status-text">CHECKING...</span>
+    </div>
+
+    <header class="main-header">
+        <div class="logo">SMARTPICK</div>
+        <nav id="top-nav-links">
+        </nav>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-box">
+            <h2 style="color: var(--main-blue); margin-bottom: 10px;">WELCOME BACK</h2>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 25px;">Please enter your details to login.</p>
+
+            <form id="login-form">
+                <input type="email" id="login-email" placeholder="Email Address" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                
+                <div style="text-align: right; margin-bottom: 15px;">
+                    <a href="#" style="font-size: 0.8rem; color: var(--main-blue); text-decoration: none;">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="btn-primary-full">LOG IN</button>
+            </form>
+
+            <p style="margin-top: 20px; font-size: 0.9rem;">
+                Don't have an account? <a href="register.html" style="color: var(--main-blue); font-weight: 600; text-decoration: none;">Register here</a>
+            </p>
+        </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

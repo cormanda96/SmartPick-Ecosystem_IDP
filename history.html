@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | System History</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Specific styling for the History Tables */
+        .history-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .history-table th {
+            text-align: left;
+            padding: 12px;
+            background-color: #f8f9fa;
+            color: #555;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            border-bottom: 2px solid #eee;
+        }
+
+        .history-table td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #f1f1f1;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        .badge-history {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .code-tag {
+            font-family: monospace;
+            background: #e3f2fd;
+            color: var(--main-blue);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div id="status-banner" class="status-banner">STORE STATUS: <span id="status-text">OPEN</span></div>
+
+    <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.5rem;">☰</div>
+            <div class="logo">SMARTPICK</div>
+        </div>
+        <nav id="top-nav-links">
+            <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="side-panel" id="side-panel">
+        <nav id="side-nav"></nav>
+    </div>
+
+    <main id="main-content" class="main-content">
+        <h2 style="color: var(--main-blue); margin-bottom: 25px;">SYSTEM AUDIT HISTORY</h2>
+
+        <div class="history-card">
+            <h3 style="color: #444; border-left: 4px solid var(--main-blue); padding-left: 10px;">PROPOSAL DECISIONS</h3>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Student</th>
+                        <th>Project Name</th>
+                        <th>Supervisor Status</th>
+                        <th>Feedback</th>
+                    </tr>
+                </thead>
+                <tbody id="history-proposal-body">
+                    </tbody>
+            </table>
+        </div>
+        <div class="history-card">
+            <h3 style="color: #444; border-left: 4px solid var(--open-green); padding-left: 10px;">COMPONENT DISPENSE LOGS</h3>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Dispense Date</th>
+                        <th>Recipient</th>
+                        <th>Bag Code</th>
+                        <th>Components Handed Over</th>
+                        <th>Store Status</th>
+                    </tr>
+                </thead>
+                <tbody id="history-dispense-body">
+                    </tbody>
+            </table>
+        </div>
+        <div class="history-card" style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="flex: 1;">
+                <h3>REPORT SETTINGS</h3>
+                <label style="font-size: 0.9rem; color: #666;">Select Month:</label>
+                <input type="month" id="history-month-filter" class="mgr-input-name" 
+                       value="2026-04" onchange="renderEnhancedHistory()">
+
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                    <p><strong>Total Dispensed:</strong> <span id="total-out">0</span> items</p>
+                    <p><strong>New Stock Added:</strong> <span id="total-in">0</span> items</p>
+                </div>
+            </div>
+
+            <div style="flex: 1; text-align: center;">
+                <h3>COMPONENT MOVEMENT</h3>
+                <canvas id="movementChart" style="max-height: 200px;"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="app.js"></script>
+    <script>
+        // Start history rendering on load
+        window.addEventListener('DOMContentLoaded', () => {
+            renderEnhancedHistory();
+        });
+
+        function renderEnhancedHistory() {
+            const propBody = document.getElementById('history-proposal-body');
+            const dispBody = document.getElementById('history-dispense-body');
+
+            // 1. Populate Proposal History
+            propBody.innerHTML = proposalRegistry.map(p => `
+                <tr>
+                    <td>22/04/2026</td>
+                    <td style="font-weight:600;">${p.student}</td>
+                    <td>${p.project}</td>
+                    <td><span class="status-badge ${p.supervisorStatus === 'Approved' ? 'badge-approved' : 'badge-declined'}">${p.supervisorStatus}</span></td>
+                    <td style="font-style: italic; color: #777;">${p.feedback || "—"}</td>
+                </tr>
+            `).join('');
+
+            // 2. Populate Dispense History (Only those marked 'Done')
+            const dispensed = proposalRegistry.filter(p => p.storeStatus === "Done");
+            
+            if (dispensed.length === 0) {
+                dispBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No items have been dispensed yet.</td></tr>`;
+            } else {
+                dispBody.innerHTML = dispensed.map(p => `
+                    <tr>
+                        <td>22/04/2026</td>
+                        <td style="font-weight:600;">${p.student}</td>
+                        <td><span class="code-tag">${p.bagCode || "Generating..."}</span></td>
+                        <td>${p.items.join(", ")}</td>
+                        <td><span class="status-badge badge-approved">FULFILLED</span></td>
+                    </tr>
+                `).join('');
+            }
+        }
+    </script>
+</body>
+</html>

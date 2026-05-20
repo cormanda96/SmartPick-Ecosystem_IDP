@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick | Request Status</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="status-banner" class="status-banner">
+        STORE STATUS: <span id="status-text">CHECKING...</span>
+    </div>
+
+    <header class="main-header">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div id="menu-toggle" onclick="toggleSidebar()" style="cursor:pointer; font-size: 1.5rem;">☰</div>
+            <div class="logo">SMARTPICK</div>
+        </div>
+        <nav id="top-nav-links">
+            <a href="index.html">Home</a>
+            <a href="#" onclick="logout()" class="logout-btn">Log Out</a>
+        </nav>
+    </header>
+
+    <div class="side-panel" id="side-panel">
+        <nav id="side-nav"></nav>
+    </div>
+
+    <main id="main-content" class="main-content">
+        <div id="status-container">
+        </div>
+    </main>
+
+<script>
+function renderStatus() {
+    const container = document.getElementById('status-container');
+    container.innerHTML = "";
+
+    proposalRegistry.forEach(prop => {
+        const bagDisplay = prop.storeStatus === "Done" 
+            ? `<div class="bag-code-box">YOUR COLLECTION CODE: <strong>${prop.bagCode}</strong></div>`
+            : `<div class="bag-waiting">Bag is being packed...</div>`;
+
+        container.innerHTML += `
+            <div class="proposal-card">
+                <h3>Proposal ID: ${prop.id}</h3>
+                <div class="status-flex">
+                    <div class="status-box">Supervisor: <span class="badge-${prop.supervisorStatus.toLowerCase()}">${prop.supervisorStatus}</span></div>
+                    <div class="status-box">Store: <span class="badge-yellow">${prop.storeStatus}</span></div>
+                </div>
+                ${prop.supervisorStatus === "Approved" ? bagDisplay : ""}
+            </div>
+        `;
+    });
+}
+</script>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
