@@ -1148,12 +1148,11 @@ export async function renderDispenseTables() {
 
 
 // ============================================================
-//  DISPENSE PAGE — Open proposal modal (VERIFIED SCHEMA FIX)
+//  DISPENSE PAGE — Open proposal modal (SEARCH ALL LINKED FIX)
 // ============================================================
 export async function openProposal(id) {
     window._activeDispenseId = id
 
-    // Keep "drawer number" matching your exact schema layout
     const { data: prop } = await supabase
         .from('proposals')
         .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name, drawers(label, "drawer number", led_index)))')
@@ -1162,28 +1161,31 @@ export async function openProposal(id) {
 
     document.getElementById('modal-student-name').innerText = prop.profiles?.full_name || '—'
 
+    // 1. Create a clean list to store all the valid rack labels for this proposal
+    const validRackLabels = []
+
     const listBody = document.getElementById('modal-item-list')
     listBody.innerHTML = prop.proposal_items.map(item => {
         const name     = item.is_custom ? item.custom_name : item.components?.name || '—'
         const drawer   = item.components?.drawers
         const rackCode = (drawer && drawer.label) ? drawer.label.trim() : 'N/A'
         
-        // Extract ONLY the first index number out of the array safely
         let singleLed = null
         if (drawer && drawer.led_index) {
             singleLed = Array.isArray(drawer.led_index) ? drawer.led_index[0] : drawer.led_index
-            // Clean up any stray string quotes from the array parsing
             singleLed = String(singleLed).replace(/[^0-9]/g, '')
         }
 
-        // SEARCH button logic — explicitly wraps parameters safely
+        // If this item has a valid drawer, add it to our global search list
+        if (rackCode !== 'N/A') {
+            validRackLabels.push(rackCode)
+        }
+
         const searchBtn = (singleLed && rackCode !== 'N/A')
             ? `<button onclick="window.sendToESP32(${parseInt(singleLed)}, '${rackCode}')" 
                        class="btn-role" 
                        style="background:var(--open-green); color:white; border:none; padding:5px 12px; cursor:pointer;">SEARCH</button>`
-            : `<button class="btn-role" 
-                       style="background:#aaa; color:white; border:none; padding:5px 12px; cursor:not-allowed;" 
-                       disabled>SEARCH</button>`
+            : `<button class="btn-role" style="background:#aaa; color:white; border:none; padding:5px 12px; cursor:not-allowed;" disabled>SEARCH</button>`
 
         return `
             <tr>
@@ -1197,6 +1199,33 @@ export async function openProposal(id) {
 
     document.getElementById('proposal-modal').style.display = 'block'
     document.getElementById('done-btn').onclick = () => finalizePacking(id)
+
+    // 2. NEW FIX: Find the SEARCH ALL button in your HTML and link its click action dynamically!
+    const searchAllBtn = document.getElementById('search-all-btn') // Make sure your HTML button has id="search-all-btn"!
+    if (searchAllBtn) {
+        searchAllBtn.onclick = async () => {
+            if (validRackLabels.length === 0) {
+                alert('No valid rack drawers found to search in this proposal.')
+                return
+            }
+
+            try {
+                // Bulk update: Update ALL drawers whose labels are in our valid text list array
+                const { error } = await supabase
+                    .from('drawers')
+                    .update({ dispatch_active: true })
+                    .in('label', validRackLabels) // The .in() operator handles arrays smoothly!
+
+                if (error) throw error
+
+                alert(`Bulk Signal Sent! Activated Drawers: ${validRackLabels.join(', ')}`);
+                
+            } catch (err) {
+                console.error("Bulk drawer status activation failed:", err.message)
+                alert("Failed to activate all drawers: " + err.message)
+            }
+        }
+    }
 }
 
 
