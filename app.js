@@ -1198,7 +1198,7 @@ export async function openProposal(id) {
 
 
 // ============================================================
-//  DISPENSE PAGE — Close modal
+//  DISPENSE PAGE — Close modaldd
 // ============================================================
 export function closeModal() {
     document.getElementById('proposal-modal').style.display = 'none'
