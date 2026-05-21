@@ -362,7 +362,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label, drawer_number, led_index)')
+        .select('id, name, qty, categories(name), drawers(label, "drawer number", led_index)')
         .order('name')
 
     if (urlFilter) {
@@ -1148,14 +1148,15 @@ export async function renderDispenseTables() {
 
 
 // ============================================================
-//  DISPENSE PAGE — Open proposal modal (VARIABLE GAPS MOUNT FIX)
+//  DISPENSE PAGE — Open proposal modal (VERIFIED SCHEMA FIX)
 // ============================================================
 export async function openProposal(id) {
     window._activeDispenseId = id
 
+    // Keep "drawer number" matching your exact schema layout
     const { data: prop } = await supabase
         .from('proposals')
-        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name, drawers(label, drawer_number, led_index)))')
+        .select('*, profiles!proposals_student_id_fkey(full_name), proposal_items(*, components(name, drawers(label, "drawer number", led_index)))')
         .eq('id', id)
         .single()
 
@@ -1167,15 +1168,17 @@ export async function openProposal(id) {
         const drawer   = item.components?.drawers
         const rackCode = (drawer && drawer.label) ? drawer.label.trim() : 'N/A'
         
-        // CRITICAL FIX: Extract the integer out of the array safely so it passes as a standalone value
-        let ledIndex = null
+        // Extract ONLY the first index number out of the array safely
+        let singleLed = null
         if (drawer && drawer.led_index) {
-            ledIndex = Array.isArray(drawer.led_index) ? drawer.led_index[0] : drawer.led_index
+            singleLed = Array.isArray(drawer.led_index) ? drawer.led_index[0] : drawer.led_index
+            // Clean up any stray string quotes from the array parsing
+            singleLed = String(singleLed).replace(/[^0-9]/g, '')
         }
 
-        // SEARCH button always shows — disabled if no drawer assigned
-        const searchBtn = (ledIndex !== null && rackCode !== 'N/A')
-            ? `<button onclick="window.sendToESP32(${parseInt(ledIndex)}, '${rackCode}')" 
+        // SEARCH button logic — explicitly wraps parameters safely
+        const searchBtn = (singleLed && rackCode !== 'N/A')
+            ? `<button onclick="window.sendToESP32(${parseInt(singleLed)}, '${rackCode}')" 
                        class="btn-role" 
                        style="background:var(--open-green); color:white; border:none; padding:5px 12px; cursor:pointer;">SEARCH</button>`
             : `<button class="btn-role" 
