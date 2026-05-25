@@ -1,16 +1,21 @@
 /* style.css */
 :root {
-  /* Your Tri-color Palette */
-  --main-blue: #0077B6;      /* Main color for header/buttons */
-  --light-blue: #ADE8F4;     /* Secondary for backgrounds */
-  --btn-started-blue: #A2D9F3; /* Light, soft blue for the filled button */
+  /* Your Exact Original Tri-color Palette */
+  --main-blue: #0077B6;         /* Main color for header/buttons */
+  --light-blue: #ADE8F4;        /* Secondary for backgrounds */
+  --btn-started-blue: #A2D9F3;  /* Light, soft blue for the filled button */
   --btn-outline-green: #EDFDF8; /* Pale, mint-green for the outline button */
   --text-dark: #333333;
-  --white: #FFFFFF;          /* Pure white for text/body */
+  --white: #FFFFFF;             /* Pure white for text/body */
   
   /* Status Colors */
   --open-green: #28a745;
   --closed-red: #dc3545;
+
+  /* Premium Light-Glassmorphism Variables */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(0, 119, 182, 0.15);
+  --glass-blur: blur(12px);
 }
 
 body {
@@ -18,18 +23,38 @@ body {
   padding: 0;
   font-family: 'Poppins', sans-serif; 
   background-color: var(--white);
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(173, 232, 244, 0.3) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(237, 253, 248, 0.4) 0px, transparent 50%);
+  background-attachment: fixed;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* We use this to make the banner look professional */
+/* ============================================================
+   SYSTEM LAYOUTS & NAVBAR COMPLIANCE (PRESERVED)
+   ============================================================ */
 .status-banner {
   text-align: center;
-  padding: 5px;
+  padding: 8px;
   font-weight: bold;
   color: white;
-  transition: background-color 0.5s ease; /* Makes color change smooth */
+  transition: background-color 0.5s ease;
+}
+.banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #fff;
+  display: inline-block;
 }
 
 .main-header {
@@ -38,9 +63,10 @@ body {
     z-index: 1000;
     display: flex;
     justify-content: space-between;
-    padding: 10px 30px;
+    padding: 15px 30px;
     background-color: var(--main-blue);
     color: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .main-header nav {
@@ -51,11 +77,11 @@ body {
 
 .main-header nav a {
     display: inline-block; 
-    color: #FFFFFF !important; /* Force white color */
+    color: #FFFFFF !important; 
     text-decoration: none;
     padding: 5px 10px;
     margin-left: 20px;
-    cursor: pointer !important; /* Forces the hand icon */
+    cursor: pointer !important; 
 }
 
 .main-header nav a:hover {
@@ -63,18 +89,21 @@ body {
     opacity: 0.8;
 }
 
-/* Sidebar specifically for internal pages */
+/* ============================================================
+   SIDEBAR ARCHITECTURE (PRESERVED & STABILIZED)
+   ============================================================ */
 .side-panel {
-    width: 200px;
+    width: 240px;
     height: 100vh;
-    background-color: #13c5c5;
+    background-color: #ffffff;
     border-right: 1px solid #e0e0e0;
     position: fixed;
-    left: -260px; /* Hidden by default */
+    left: -260px; 
     top: 0;
-    padding-top: 100px; /* Leave room for header */
-    transition: 0.3s ease; /* Smooth slide */
+    padding-top: 100px; 
+    transition: 0.3s ease; 
     z-index: 999;
+    box-shadow: 4px 0 15px rgba(0,0,0,0.02);
 }
 
 .side-panel.open {
@@ -84,7 +113,7 @@ body {
 .sidebar-link {
     display: block;
     padding: 15px 25px;
-    color: #333;
+    color: var(--text-dark);
     text-decoration: none;
     font-weight: 500;
     transition: 0.2s;
@@ -101,7 +130,7 @@ body {
 
 .dropdown-btn {
     width: 100%;
-    padding: 15px;
+    padding: 15px 25px;
     background: none;
     border: none;
     text-align: left;
@@ -110,22 +139,23 @@ body {
     font-size: 1rem;
     cursor: pointer;
     border-bottom: 1px solid #f0f0f0;
+    font-weight: 500;
 }
 
 .dropdown-container {
-    display: none; /* Hidden by default */
+    display: none; 
     background-color: #f9f9f9;
-    max-height: 400px; /* Limits size so it doesn't break layout */
-    overflow-y: auto; /* Adds scrollbar if list is too long */
+    max-height: 400px; 
+    overflow-y: auto; 
     border-bottom: 2px solid var(--main-blue);
 }
 
 .dropdown-container.show {
-    display: block; /* Pushes other links down when visible */
+    display: block; 
 }
 
 .sub-link {
-    padding: 10px 25px;
+    padding: 10px 35px;
     font-size: 0.85rem;
     color: #666;
     display: block;
@@ -136,17 +166,16 @@ body {
 .sub-link:hover {
     background-color: #e3f2fd;
     color: var(--main-blue);
-    padding-left: 30px;
+    padding-left: 40px;
 }
 
-/* Ensure main content moves or darkens when sidebar is open */
 .main-content {
     transition: margin-left 0.3s ease;
     padding: 20px;
 }
 
 .main-content.shifted {
-    margin-left: 250px; /* Optional: push content right when menu is open */
+    margin-left: 250px; 
 }
 
 .logout-btn {
@@ -155,12 +184,10 @@ body {
     border-radius: 5px;
 }
 
-/* Push content to the right ONLY if sidebar exists */
 .body-with-sidebar {
-    padding-left: 290px; /* Width of sidebar + some gap */
+    padding-left: 290px; 
 }
 
-/* Fix the last closing bracket - make sure there is only one */
 .stock-tag {
     font-size: 0.8rem;
     font-weight: bold;
@@ -168,87 +195,184 @@ body {
     border-radius: 5px;
 }
 
-/* Perfect Centered Hero Section */
+/* ============================================================
+   UPGRADED HOMEPAGE GLASSMORPHISM LAYOUT
+   ============================================================ */
 .home-hero {
-    flex: 1; /* Pushes content down slightly from the header */
+    flex: 1; 
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 0 20px;
-    margin-top: -50px; /* Adjusts the vertical center slightly */
+    padding: 40px 20px;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
-/* Title Block: Exact styling from image */
+/* Beautiful Translucent Central Card Panel */
+.hero-glass-panel {
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: 24px;
+    padding: 45px 30px;
+    box-shadow: 0 8px 32px 0 rgba(0, 119, 182, 0.06);
+    margin-bottom: 40px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.brand-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    background: rgba(0, 117, 182, 0.08);
+    border: 1px solid rgba(0, 117, 182, 0.15);
+    color: var(--main-blue);
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
 .title-container {
-    margin-bottom: 25px; /* Spacing between title and description */
+    margin-bottom: 20px;
 }
 
 .main-serif-title {
-    /* Uses the Playfair serif font */
     font-family: 'Playfair Display', serif;
     font-style: italic;
     font-weight: 600;
-    font-size: 3rem; /* Precise large font size */
+    font-size: 3.2rem; 
     color: var(--text-dark);
     margin: 0;
 }
 
 .sub-condensed-title {
-    /* Uses a clean, condensed styling from screenshot */
-    font-weight: 400;
-    font-size: 1.5rem;
-    color: var(--text-dark);
-    letter-spacing: 2px; /* Adds space between letters for a clean look */
-    margin: 5px 0 0 0;
+    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--main-blue);
+    letter-spacing: 3px; 
+    margin: 8px 0 0 0;
 }
 
-/* Description Text */
 .description-text {
-    color: var(--text-dark);
-    font-size: 1.1rem;
+    color: #555555;
+    font-size: 1.05rem;
     line-height: 1.6;
-    max-width: 600px; /* Limits paragraph width for readability */
-    margin: 0 0 40px 0; /* Spacing before buttons */
+    max-width: 650px; 
+    margin: 0 auto 35px auto; 
 }
 
-/* Button Group */
 .button-group {
     display: flex;
-    gap: 30px; /* Spacing between the two buttons */
+    justify-content: center;
+    gap: 25px; 
 }
 
-/* Base style for both buttons */
 .btn-started, .btn-learn-more {
     display: inline-block;
-    padding: 15px 40px; /* Button dimensions */
-    border-radius: 20px; /* Distinct, rounded button shape */
+    padding: 14px 38px; 
+    border-radius: 16px; 
     font-weight: 600;
     font-size: 0.9rem;
     text-decoration: none;
     letter-spacing: 1px;
     color: var(--text-dark);
-    /* Exact border width and color from image */
     border: 2px solid #000000; 
+    transition: all 0.25s ease;
 }
 
-/* "Started" Button: Exact filled blue color */
 .btn-started {
     background-color: var(--btn-started-blue);
 }
 
-/* "Learn More" Button: Exact outline and pale green background */
 .btn-learn-more {
     background-color: var(--btn-outline-green);
 }
 
-/* Subtle hover effects */
 .btn-started:hover, .btn-learn-more:hover {
-    transform: translateY(-2px); /* Lifts the button slightly on hover */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transform: translateY(-3px); 
+    box-shadow: 0 6px 15px rgba(0, 119, 182, 0.15);
+    background-color: var(--white);
 }
-/* homepage 
+
+/* ============================================================
+   ROLE ACCESS PORTAL GRID (COMPATIBLE DESIGN)
+   ============================================================ */
+.portal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    border: 2px solid var(--glass-border);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: 20px;
+    padding: 30px;
+    text-align: left;
+    box-shadow: 0 8px 24px 0 rgba(0, 119, 182, 0.04);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.card-icon {
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.glass-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.3rem;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.glass-card p {
+    color: #666666;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+}
+
+.card-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 25px 0;
+    font-size: 0.8rem;
+    color: #555555;
+}
+
+.card-features li {
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.card-link {
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--main-blue);
+    transition: opacity 0.2s;
+}
+
+.card-link:hover {
+    opacity: 0.7;
+}
+
+/* Individual Interactive Card States */
+.glass-card:hover {
+    transform: translateY(-5px);
+    background: var(--white);
+    border-color: var(--main-blue);
+    box-shadow: 0 12px 30px rgba(0, 119, 182, 0.1);
+}
 
 /* LOG IN PART */ 
 

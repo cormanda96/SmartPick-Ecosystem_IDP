@@ -5,14 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartPick | Fueling Innovation</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,600&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
     <div id="status-banner" class="status-banner">
-        STORE STATUS: <span id="status-text">CHECKING...</span>
+        <div class="banner-content">
+            <span class="pulse-dot"></span>
+            STORE STATUS: <span id="status-text">CHECKING...</span>
+        </div>
     </div>
 
     <header class="main-header">
@@ -23,19 +29,63 @@
 
     <main class="home-hero">
         
-        <div class="title-container">
-            <h1 class="main-serif-title">Fueling innovation,</h1>
-            <h2 class="sub-condensed-title">ONE COMPONENT AT A TIME</h2>
+        <div class="hero-glass-panel">
+            <div class="brand-badge">🚀 IDP COMPONENT DISPATCH PLATFORM</div>
+            
+            <div class="title-container">
+                <h1 class="main-serif-title">Fueling innovation,</h1>
+                <h2 class="sub-condensed-title">ONE COMPONENT AT A TIME</h2>
+            </div>
+
+            <p class="description-text">
+                Your gateway to the hardware you need.<br>
+                Request, track, and manage components in one unified ecosystem.
+            </p>
+
+            <div class="button-group">
+                <a href="login.html" class="btn-started">STARTED</a>
+                <a href="learn-more.html" class="btn-learn-more">LEARN MORE</a>
+            </div>
         </div>
 
-        <p class="description-text">
-            Your gateway to the hardware you need.<br>
-            Request, track, and manage components in one unified ecosystem.
-        </p>
+        <div class="portal-grid">
+            
+            <div class="glass-card student-card">
+                <div class="card-icon">👨‍💻</div>
+                <h3>Student Portal</h3>
+                <p>Browse real-time component stocks, upload project schematics, and view active collection codes.</p>
+                <ul class="card-features">
+                    <li>✓ Live Catalog Navigation</li>
+                    <li>✓ Schematic Submissions</li>
+                    <li>✓ Token Bag Tracking</li>
+                </ul>
+                <a href="login.html" class="card-link">Access Dashboard →</a>
+            </div>
 
-        <div class="button-group">
-            <a href="login.html" class="btn-started">STARTED</a>
-            <a href="learn-more.html" class="btn-learn-more">LEARN MORE</a>
+            <div class="glass-card supervisor-card">
+                <div class="card-icon">🛡️</div>
+                <h3>Supervisor Hub</h3>
+                <p>Audit structural component requirements, evaluate proposals, and log direct review validation feedback.</p>
+                <ul class="card-features">
+                    <li>✓ Live Approval Requests Feed</li>
+                    <li>✓ Core Design Evaluations</li>
+                    <li>✓ Realtime Comment Updates</li>
+                </ul>
+                <a href="login.html" class="card-link">Review Console →</a>
+            </div>
+
+            <div class="glass-card manager-card">
+                <div class="card-icon">⚡</div>
+                <h3>Manager Console</h3>
+                <p>Trigger physical storage hardware locator loops, update live stock registers, and cycle open safety blocks.</p>
+                <ul class="card-features">
+                    <li>✓ Realtime Hardware Dispatch</li>
+                    <li>✓ Automated Stock Verification</li>
+                    <li>✓ Master System Controls</li>
+                </ul>
+                <a href="login.html" class="card-link">Launch Dispenser →</a>
+            </div>
+
         </div>
 
     </main>
