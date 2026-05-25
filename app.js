@@ -1433,53 +1433,46 @@ export async function renderEnhancedHistory() {
             }
         });
 
-        // Update visual counter tokens
+        // Update text labels instantly
         document.getElementById('total-dispensed-val').innerText = totalDispensedCount;
         
-        // Mock addition calculation parameter placeholder mapped for structural continuity
         const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120;
         document.getElementById('total-added-val').innerText = mockAddedValue;
 
-        // CRITICAL REPAIR: Find the chart container parent element wrapper
-        const chartWrapper = document.getElementById('movementChart')?.parentElement;
-        if (!chartWrapper) return;
+        // TARGET CONTAINER FIX: Grab the wrapper block safely
+        const wrapper = document.getElementById('chart-wrapper');
+        if (!wrapper) return;
 
-        // Reset the chart block instance safely to clear out lingering canvas cache bugs
+        // Destroy the old instance if it exists
         if (activeMovementChart) {
-            activeMovementChart.destroy(); 
+            activeMovementChart.destroy();
             activeMovementChart = null;
         }
 
-        // Re-inject a clean, brand new canvas tag so Chart.js always has a fresh context canvas element to bind to
-        chartWrapper.innerHTML = '<canvas id="movementChart"></canvas>';
-        const newCanvasElement = document.getElementById('movementChart');
+        // Force reset the canvas completely so Chart.js has a fresh element
+        wrapper.innerHTML = '<canvas id="movementChart"></canvas>';
+        const targetCanvas = document.getElementById('movementChart');
 
-        const totalDataSum = totalDispensedCount + mockAddedValue;
-        
-        if (totalDataSum > 0 && newCanvasElement) {
-            activeMovementChart = new Chart(newCanvasElement, {
-                type: 'pie',
-                data: {
-                    labels: ['Total Dispensed', 'New Stock Added'],
-                    datasets: [{
-                        data: [totalDispensedCount, mockAddedValue],
-                        backgroundColor: ['#0077B6', '#28a745'], 
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { 
-                            position: 'bottom',
-                            labels: { font: { family: 'Poppins', size: 12 } }
-                        }
-                    }
+        // Draw the chart layout
+        activeMovementChart = new Chart(targetCanvas, {
+            type: 'pie',
+            data: {
+                labels: ['Total Dispensed', 'New Stock Added'],
+                datasets: [{
+                    data: [totalDispensedCount, mockAddedValue],
+                    backgroundColor: ['#0077B6', '#28a745'], 
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
                 }
-            });
-        }
+            }
+        });
     }
 
     // Bind event dynamic listeners to drop change operations
