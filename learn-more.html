@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPick — Learn More & Documentation</title>
+    <link rel="stylesheet" href="style.css"> <style>
+        /* Custom documentation styling */
+        .doc-container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .doc-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .doc-header h1 {
+            color: var(--main-blue, #2c3e50);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .doc-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+        .doc-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+            border-left: 5px solid var(--main-blue, #3498db);
+        }
+        .doc-section h2 {
+            color: var(--main-blue, #2c3e50);
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .tech-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+        .tech-card h4 {
+            margin: 0 0 10px 0;
+            color: var(--open-green, #27ae60);
+        }
+        .workflow-step {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: flex-start;
+        }
+        .step-num {
+            background: var(--main-blue, #3498db);
+            color: white;
+            font-weight: bold;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .btn-back {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #333;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-bottom: 30px;
+            transition: background 0.2s;
+        }
+        .btn-back:hover {
+            background: #555;
+        }
+        .badge-feature {
+            background: #e1f5fe;
+            color: #0288d1;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="doc-container">
+        
+        <a href="index.html" class="btn-back">← Back to Home</a>
+
+        <header class="doc-header">
+            <h1>SmartPick Ecosystem</h1>
+            <p>An Integrated Student-to-Manager Component Dispatch Architecture</p>
+        </header>
+
+        <section class="doc-section">
+            <h2>📝 Project Overview & Intent</h2>
+            <p>Traditional component inventory management in engineering laboratories frequently suffers from sorting bottlenecks, manual logbook discrepancies, and delayed retrieval times during practical exercises. <strong>SmartPick</strong> remedies this by integrating an intelligent inventory management interface with a centralized cloud database and hardware-automated storage indicators.</p>
+        </section>
+
+        <section class="doc-section">
+            <h2>⚙️ The Core Operational Workflow</h2>
+            
+            <div class="workflow-step">
+                <div class="step-num">1</div>
+                <div>
+                    <strong>Digital Request (Student Role)</strong>
+                    <p>Students browse real-time hardware quantities, upload required circuit diagrams securely, and submit components requests for formal laboratory supervisor verification.</p>
+                </div>
+            </div>
+
+            <div class="workflow-step">
+                <div class="step-num">2</div>
+                <div>
+                    <strong>Verification & Audit (Supervisor Role)</strong>
+                    <p>Supervisors review incoming requests on a dedicated review panel, confirming compliance before changing status profiles to approved or providing targeted feedback notes.</p>
+                </div>
+            </div>
+
+            <div class="workflow-step">
+                <div class="step-num">3</div>
+                <div>
+                    <strong>Automated Retrieval (Manager Dispense Hub)</strong>
+                    <p>Upon approval, store managers execute the dispatch pipeline. Selecting <em>Search</em> triggers automated localization streams, while final token confirmation handles programmatic stock deduction.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="doc-section">
+            <h2>🌐 System Architecture & Tech Stack</h2>
+            <p>The technical blueprint leverages a modern three-tier application architecture to synchronize hardware states with cloud transitions instantly.</p>
+            
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h4>Frontend Layer</h4>
+                    <p>Vanilla HTML5, semantic CSS layout tokens, and modern JavaScript (ES Modules). Hosted globally on <strong>Vercel</strong> for continuous automated compilation pipelines.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>Cloud & Database Engine</h4>
+                    <p>Powered by <strong>Supabase (PostgreSQL)</strong>. Handles role-based authentication, object asset storage bucket channels, and live row mutation streams via WebSockets.</p>
+                </div>
+                <div class="tech-card">
+                    <h4>Hardware Integration</h4>
+                    <p>Physical <strong>ESP32 Microcontroller</strong> nodes driving addressable LED lighting arrays. The controller listens to real-time changes over the network to automate hardware drawer lookups.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="doc-section">
+            <h2>🛠️ Advanced System Implementation Tokens</h2>
+            <ul>
+                <li style="margin-bottom: 10px;"><strong>Live Safety Interlocks:</strong> A global database gate variable state checking routine (`is_open`) prevents unauthorized hardware signals from running when the lab is closed.</li>
+                <li style="margin-bottom: 10px;"><strong>Transactional Stock Integrity:</strong> Automated inventory processing loops parse arrays to ensure quantities do not fall below zero, triggering auto-declines if allocations shift mid-session.</li>
+                <li style="margin-bottom: 10px;"><strong>Role Selection Enforcement:</strong> Secure route tokens dynamically distribute matching layout access controls specifically for Student, Supervisor, or Manager profiles.</li>
+            </ul>
+        </section>
+
+    </div>
+
+</body>
+</html>
