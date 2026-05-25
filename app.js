@@ -1414,7 +1414,7 @@ export async function renderEnhancedHistory() {
 
     // 3. Isolated Functional Core: Monthly Metric Analytics Computation Engine
     function calculateMonthlyMetrics() {
-        const selectedTarget = monthSelect ? monthSelect.value : "2026-05"; // Default fallback
+        const selectedTarget = monthSelect ? monthSelect.value : "2026-05"; 
         const [targetYear, targetMonth] = selectedTarget.split('-');
 
         let totalDispensedCount = 0;
@@ -1440,26 +1440,30 @@ export async function renderEnhancedHistory() {
         const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120;
         document.getElementById('total-added-val').innerText = mockAddedValue;
 
-        // 4. Chart Engine Initialization Lifecycle Management
-        const chartCanvas = document.getElementById('movementChart');
-        if (!chartCanvas) return;
+        // CRITICAL REPAIR: Find the chart container parent element wrapper
+        const chartWrapper = document.getElementById('movementChart')?.parentElement;
+        if (!chartWrapper) return;
 
-        // Clean up previous instances so the chart can redraw smoothly
+        // Reset the chart block instance safely to clear out lingering canvas cache bugs
         if (activeMovementChart) {
             activeMovementChart.destroy(); 
+            activeMovementChart = null;
         }
+
+        // Re-inject a clean, brand new canvas tag so Chart.js always has a fresh context canvas element to bind to
+        chartWrapper.innerHTML = '<canvas id="movementChart"></canvas>';
+        const newCanvasElement = document.getElementById('movementChart');
 
         const totalDataSum = totalDispensedCount + mockAddedValue;
         
-        // Render chart only if there are active numbers to show
-        if (totalDataSum > 0) {
-            activeMovementChart = new Chart(chartCanvas, {
+        if (totalDataSum > 0 && newCanvasElement) {
+            activeMovementChart = new Chart(newCanvasElement, {
                 type: 'pie',
                 data: {
                     labels: ['Total Dispensed', 'New Stock Added'],
                     datasets: [{
                         data: [totalDispensedCount, mockAddedValue],
-                        backgroundColor: ['#0077B6', '#28a745'], // Your clean palette template
+                        backgroundColor: ['#0077B6', '#28a745'], 
                         borderWidth: 2,
                         borderColor: '#ffffff'
                     }]
