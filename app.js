@@ -1373,7 +1373,7 @@ export async function renderEnhancedHistory() {
     const propBody = document.getElementById('history-proposal-body')
     const dispBody = document.getElementById('history-dispense-body')
     const monthSelect = document.getElementById('month-select')
-    
+
     if (!propBody || !dispBody) return
 
     // 1. Fetch raw datasets from Supabase
@@ -1414,7 +1414,7 @@ export async function renderEnhancedHistory() {
 
     // 3. Isolated Functional Core: Monthly Metric Analytics Computation Engine
     function calculateMonthlyMetrics() {
-        const selectedTarget = monthSelect ? monthSelect.value : "2026-05"; // e.g., "2026-05"
+        const selectedTarget = monthSelect ? monthSelect.value : "2026-05"; // Default fallback
         const [targetYear, targetMonth] = selectedTarget.split('-');
 
         let totalDispensedCount = 0;
@@ -1444,29 +1444,38 @@ export async function renderEnhancedHistory() {
         const chartCanvas = document.getElementById('movementChart');
         if (!chartCanvas) return;
 
+        // Clean up previous instances so the chart can redraw smoothly
         if (activeMovementChart) {
-            activeMovementChart.destroy(); // Clear residual memory footprint trace paths safely
+            activeMovementChart.destroy(); 
         }
 
-        activeMovementChart = new Chart(chartCanvas, {
-            type: 'pie',
-            data: {
-                labels: ['Total Dispensed', 'New Stock Added'],
-                datasets: [{
-                    data: [totalDispensedCount, mockAddedValue],
-                    backgroundColor: ['#0077B6', '#28a745'],
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+        const totalDataSum = totalDispensedCount + mockAddedValue;
+        
+        // Render chart only if there are active numbers to show
+        if (totalDataSum > 0) {
+            activeMovementChart = new Chart(chartCanvas, {
+                type: 'pie',
+                data: {
+                    labels: ['Total Dispensed', 'New Stock Added'],
+                    datasets: [{
+                        data: [totalDispensedCount, mockAddedValue],
+                        backgroundColor: ['#0077B6', '#28a745'], // Your clean palette template
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { font: { family: 'Poppins', size: 12 } }
+                        }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Bind event dynamic listeners to drop change operations
@@ -1478,7 +1487,6 @@ export async function renderEnhancedHistory() {
     // Trigger on structural processing completion
     calculateMonthlyMetrics();
 }
-
 
 // ============================================================
 //  REGISTER PAGE — Show/hide role-specific fields
