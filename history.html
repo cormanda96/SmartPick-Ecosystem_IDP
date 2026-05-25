@@ -6,6 +6,9 @@
     <title>SmartPick | System History</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         /* Specific styling for the History Tables */
         .history-card {
@@ -88,10 +91,10 @@
                         <th>Feedback</th>
                     </tr>
                 </thead>
-                <tbody id="history-proposal-body">
-                    </tbody>
+                <tbody id="history-proposal-body"></tbody>
             </table>
         </div>
+
         <div class="history-card">
             <h3 style="color: #444; border-left: 4px solid var(--open-green); padding-left: 10px;">COMPONENT DISPENSE LOGS</h3>
             <table class="history-table">
@@ -104,69 +107,31 @@
                         <th>Store Status</th>
                     </tr>
                 </thead>
-                <tbody id="history-dispense-body">
-                    </tbody>
+                <tbody id="history-dispense-body"></tbody>
             </table>
         </div>
-        <div class="dashboard-details">
-        <div class="stat-card" style="flex: 1; text-align: left;">
-            <h3>REPORT SETTINGS</h3>
-            <label for="month-select">Select Month:</label>
-            <input type="month" id="month-select" value="2026-05">
-        
-            <div style="margin-top: 20px; background: #f8fafc; padding: 20px; border-radius: 8px;">
-                <p>Total Dispensed: <strong id="total-dispensed-val">0</strong> items</p>
-                <p>New Stock Added: <strong id="total-added-val">0</strong> items</p>
-            </div>
-        </div>
 
-        <div class="stat-card" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-            <h3>COMPONENT MOVEMENT</h3>
-            <div id="chart-wrapper" style="width: 100%; max-width: 280px; height: 280px; margin: 0 auto;">
-                <canvas id="movementChart"></canvas>
+        <div class="dashboard-details" style="display: flex; gap: 20px; flex-wrap: wrap;">
+            <div class="stat-card" style="flex: 1; text-align: left; background: white; padding: 25px; border-radius: 12px; border: 1px solid #eee;">
+                <h3>REPORT SETTINGS</h3>
+                <label for="month-select">Select Month:</label>
+                <input type="month" id="month-select" value="2026-05" style="width: 100%; max-width: 200px;">
+            
+                <div style="margin-top: 20px; background: #f8fafc; padding: 20px; border-radius: 8px;">
+                    <p>Total Dispensed: <strong id="total-dispensed-val">0</strong> items</p>
+                    <p>New Stock Added: <strong id="total-added-val">0</strong> items</p>
+                </div>
+            </div>
+
+            <div class="stat-card" style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; padding: 25px; border-radius: 12px; border: 1px solid #eee;">
+                <h3>COMPONENT MOVEMENT</h3>
+                <div id="chart-wrapper" style="width: 100%; max-width: 280px; height: 280px; margin: 0 auto; position: relative;">
+                    <canvas id="movementChart"></canvas>
+                </div>
             </div>
         </div>
     </main>
 
     <script type="module" src="app.js"></script>
-    <script>
-        // Start history rendering on load
-        window.addEventListener('DOMContentLoaded', () => {
-            renderEnhancedHistory();
-        });
-
-        function renderEnhancedHistory() {
-            const propBody = document.getElementById('history-proposal-body');
-            const dispBody = document.getElementById('history-dispense-body');
-
-            // 1. Populate Proposal History
-            propBody.innerHTML = proposalRegistry.map(p => `
-                <tr>
-                    <td>22/04/2026</td>
-                    <td style="font-weight:600;">${p.student}</td>
-                    <td>${p.project}</td>
-                    <td><span class="status-badge ${p.supervisorStatus === 'Approved' ? 'badge-approved' : 'badge-declined'}">${p.supervisorStatus}</span></td>
-                    <td style="font-style: italic; color: #777;">${p.feedback || "—"}</td>
-                </tr>
-            `).join('');
-
-            // 2. Populate Dispense History (Only those marked 'Done')
-            const dispensed = proposalRegistry.filter(p => p.storeStatus === "Done");
-            
-            if (dispensed.length === 0) {
-                dispBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No items have been dispensed yet.</td></tr>`;
-            } else {
-                dispBody.innerHTML = dispensed.map(p => `
-                    <tr>
-                        <td>22/04/2026</td>
-                        <td style="font-weight:600;">${p.student}</td>
-                        <td><span class="code-tag">${p.bagCode || "Generating..."}</span></td>
-                        <td>${p.items.join(", ")}</td>
-                        <td><span class="status-badge badge-approved">FULFILLED</span></td>
-                    </tr>
-                `).join('');
-            }
-        }
-    </script>
 </body>
 </html>

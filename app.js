@@ -1433,46 +1433,48 @@ export async function renderEnhancedHistory() {
             }
         });
 
-        // Update text labels instantly
+        // Update display numbers
         document.getElementById('total-dispensed-val').innerText = totalDispensedCount;
         
         const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120;
         document.getElementById('total-added-val').innerText = mockAddedValue;
 
-        // TARGET CONTAINER FIX: Grab the wrapper block safely
+        // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
         const wrapper = document.getElementById('chart-wrapper');
         if (!wrapper) return;
 
-        // Destroy the old instance if it exists
         if (activeMovementChart) {
             activeMovementChart.destroy();
             activeMovementChart = null;
         }
 
-        // Force reset the canvas completely so Chart.js has a fresh element
+        // Re-inject a clean canvas element before rendering
         wrapper.innerHTML = '<canvas id="movementChart"></canvas>';
         const targetCanvas = document.getElementById('movementChart');
 
-        // Draw the chart layout
-        activeMovementChart = new Chart(targetCanvas, {
-            type: 'pie',
-            data: {
-                labels: ['Total Dispensed', 'New Stock Added'],
-                datasets: [{
-                    data: [totalDispensedCount, mockAddedValue],
-                    backgroundColor: ['#0077B6', '#28a745'], 
-                    borderWidth: 2,
-                    borderColor: '#ffffff'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom' }
+        const totalDataSum = totalDispensedCount + mockAddedValue;
+
+        if (totalDataSum > 0 && targetCanvas) {
+            activeMovementChart = new Chart(targetCanvas, {
+                type: 'pie',
+                data: {
+                    labels: ['Total Dispensed', 'New Stock Added'],
+                    datasets: [{
+                        data: [totalDispensedCount, mockAddedValue],
+                        backgroundColor: ['#0077B6', '#28a745'], 
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
                 }
-            }
-        });
+            });
+        }
     }
 
     // Bind event dynamic listeners to drop change operations
