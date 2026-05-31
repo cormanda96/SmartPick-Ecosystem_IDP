@@ -34,28 +34,13 @@
         <div class="dashboard-grid" style="margin-top: 30px;">
             <div class="activity-box" style="background: white; padding: 20px; border-radius: 12px; border: 1px solid #ddd;">
                 <h3>Current Stock Levels</h3>
-                <canvas id="inventoryChart" style="max-height: 300px;"></canvas>
+                <div id="category-tabs" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;"></div>
+                <div id="stock-table-container"></div>
             </div>
         </div>
     </main>
 
     <script type="module" src="app.js"></script>
-    <script>
-        // Logic for the Manager's Chart
-        window.addEventListener('DOMContentLoaded', () => {
-            const ctx = document.getElementById('inventoryChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: componentsData.map(item => item.name),
-                    datasets: [{
-                        label: 'Quantity Available',
-                        data: componentsData.map(item => item.qty),
-                        backgroundColor: 'rgba(52, 152, 219, 0.7)'
-                    }]
-                }
-            });
-        });
-    </script>
+   
 </body>
 </html>

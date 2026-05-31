@@ -1555,7 +1555,10 @@ export async function renderEnhancedHistory() {
     dispBody.innerHTML = dispensed.length === 0
         ? `<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No items have been dispensed yet.</td></tr>`
         : dispensed.map(p => {
-            const itemNames = p.proposal_items.map(i => i.components?.name || 'Custom').join(', ')
+            const itemNames = p.proposal_items.map(i => {
+                const name = i.components?.name || i.custom_name || 'Custom'
+                return `${name} (x${i.qty_requested})`
+            }).join(', ')
             return `
                 <tr>
                     <td>${p.dispensed_at ? new Date(p.dispensed_at).toLocaleDateString('en-MY') : '—'}</td>
@@ -1589,10 +1592,56 @@ export async function renderEnhancedHistory() {
         });
 
         // Update display numbers
-        document.getElementById('total-dispensed-val').innerText = totalDispensedCount;
-        
-        const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120;
-        document.getElementById('total-added-val').innerText = mockAddedValue;
+        document.getElementById('total-dispensed-val').innerText = totalDispensedCount
+
+        const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120
+        document.getElementById('total-added-val').innerText = mockAddedValue
+
+        // Build breakdown list
+        const breakdownContainer = document.getElementById('dispensed-breakdown')
+        if (breakdownContainer) {
+            const itemMap = {}
+            dispensed.forEach(p => {
+                if (!p.dispensed_at) return
+                const dDate = new Date(p.dispensed_at)
+                const dYear = dDate.getFullYear().toString()
+                const dMonth = (dDate.getMonth() + 1).toString().padStart(2, '0')
+                if (dYear !== targetYear || dMonth !== targetMonth) return
+
+                p.proposal_items.forEach(item => {
+                    const name = item.components?.name || 'Custom'
+                    if (!itemMap[name]) itemMap[name] = 0
+                    itemMap[name] += (item.qty_requested || 0)
+                })
+            })
+
+            const entries = Object.entries(itemMap)
+            if (entries.length === 0) {
+                breakdownContainer.innerHTML = '<p style="color:#999; font-size:0.85rem;">No data for this month.</p>'
+            } else {
+                breakdownContainer.innerHTML = `
+                    <details style="margin-top:10px;">
+                        <summary style="cursor:pointer; font-weight:600; color:var(--main-blue); font-size:0.9rem;">View Breakdown ▾</summary>
+                        <table style="width:100%; margin-top:10px; border-collapse:collapse; font-size:0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Component</th>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Qty Dispensed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${entries.map(([name, qty]) => `
+                                    <tr>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5;">${name}</td>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600;">${qty}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </details>
+                `
+            }
+        }
 
         // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
         const wrapper = document.getElementById('chart-wrapper');
@@ -1665,12 +1714,75 @@ export function showFields(role, clickedBtn) {
 // ============================================================
 //  MANAGER DASHBOARD — Inventory chart data
 // ============================================================
-export async function getComponentsForChart() {
-    const { data } = await supabase
+export async function renderManagerStockLevels() {
+    const tabsContainer = document.getElementById('category-tabs')
+    const tableContainer = document.getElementById('stock-table-container')
+    if (!tabsContainer || !tableContainer) return
+
+    const { data: cats } = await supabase.from('categories').select('id, name').order('name')
+    const { data: components } = await supabase
         .from('components')
-        .select('name, qty')
+        .select('name, qty, categories(name)')
         .order('name')
-    return data || []
+
+    if (!cats || !components) return
+
+    let activeCat = cats[0]?.name || ''
+
+    function renderTable(catName) {
+        activeCat = catName
+        const filtered = components.filter(c => c.categories?.name === catName)
+
+        // Update tab styles
+        tabsContainer.querySelectorAll('button').forEach(btn => {
+            btn.style.background = btn.dataset.cat === catName ? 'var(--main-blue)' : 'white'
+            btn.style.color = btn.dataset.cat === catName ? 'white' : 'var(--main-blue)'
+        })
+
+        if (filtered.length === 0) {
+            tableContainer.innerHTML = `<p style="color:#999; text-align:center; padding:20px;">No components in this category.</p>`
+            return
+        }
+
+        tableContainer.innerHTML = `
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left; padding:10px; background:#f8f9fa; color:#555; font-size:0.85rem; border-bottom:2px solid #eee;">Component</th>
+                        <th style="text-align:left; padding:10px; background:#f8f9fa; color:#555; font-size:0.85rem; border-bottom:2px solid #eee;">Stock</th>
+                        <th style="text-align:left; padding:10px; background:#f8f9fa; color:#555; font-size:0.85rem; border-bottom:2px solid #eee;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${filtered.map(c => `
+                        <tr>
+                            <td style="padding:10px; border-bottom:1px solid #f1f1f1;">${c.name}</td>
+                            <td style="padding:10px; border-bottom:1px solid #f1f1f1; font-weight:600; color:${c.qty > 0 ? 'green' : 'red'}">${c.qty}</td>
+                            <td style="padding:10px; border-bottom:1px solid #f1f1f1;">
+                                <span style="padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600; background:${c.qty > 10 ? '#d4edda' : c.qty > 0 ? '#fff3cd' : '#f8d7da'}; color:${c.qty > 10 ? '#155724' : c.qty > 0 ? '#856404' : '#721c24'};">
+                                    ${c.qty > 10 ? 'OK' : c.qty > 0 ? 'LOW' : 'OUT'}
+                                </span>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `
+    }
+
+    // Build category tabs
+    tabsContainer.innerHTML = ''
+    cats.forEach(cat => {
+        const btn = document.createElement('button')
+        btn.textContent = cat.name
+        btn.dataset.cat = cat.name
+        btn.style = `padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:white; color:var(--main-blue); cursor:pointer; font-size:0.85rem;`
+        btn.onclick = () => renderTable(cat.name)
+        tabsContainer.appendChild(btn)
+    })
+
+    // Render first category by default
+    renderTable(activeCat)
 }
 
 
@@ -1769,19 +1881,5 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Manager dashboard chart
-    if (document.getElementById('inventoryChart')) {
-        const items = await getComponentsForChart()
-        const ctx   = document.getElementById('inventoryChart').getContext('2d')
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels:   items.map(i => i.name),
-                datasets: [{
-                    label:           'Quantity Available',
-                    data:            items.map(i => i.qty),
-                    backgroundColor: 'rgba(52, 152, 219, 0.7)'
-                }]
-            }
-        })
-    }
+    if (document.getElementById('category-tabs')) await renderManagerStockLevels()
 })
