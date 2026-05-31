@@ -1540,36 +1540,34 @@ export async function renderEnhancedHistory() {
 
     // 2. Render traditional tables globally
     propBody.innerHTML = safeProposals.map(p => `
-        <tr>
-            <td>${new Date(p.submitted_at).toLocaleDateString('en-MY')}</td>
-            <td style="font-weight:600;">${p.profiles?.full_name || '—'}</td>
-            <td>${p.project_name}</td>
-            <td><span class="status-badge badge-${p.supervisor_status.toLowerCase()}">${p.supervisor_status}</span></td>
-            <td style="font-style:italic; color:#777;">${p.feedback || '—'}</td>
-            <td><button onclick="deleteProposalRow(${p.id})" style="padding:4px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button></td>
-        </tr>
-    `).join('')
+    <tr>
+        <td>${new Date(p.submitted_at).toLocaleDateString('en-MY')}</td>
+        <td style="font-weight:600;">${p.profiles?.full_name || '—'}</td>
+        <td>${p.project_name}</td>
+        <td><span class="status-badge badge-${p.supervisor_status.toLowerCase()}">${p.supervisor_status}</span></td>
+        <td style="font-style:italic; color:#777;">${p.feedback || '—'}</td>
+    </tr>
+`).join('')
 
     const dispensed = safeProposals.filter(p => p.store_status === 'Done' || p.store_status === 'Collected')
 
     dispBody.innerHTML = dispensed.length === 0
         ? `<tr><td colspan="5" style="text-align:center; color:#999; padding:20px;">No items have been dispensed yet.</td></tr>`
         : dispensed.map(p => {
-            const itemNames = p.proposal_items.map(i => {
-                const name = i.components?.name || i.custom_name || 'Custom'
-                return `${name} (x${i.qty_requested})`
-            }).join(', ')
-            return `
-                <tr>
-                    <td>${p.dispensed_at ? new Date(p.dispensed_at).toLocaleDateString('en-MY') : '—'}</td>
-                    <td style="font-weight:600;">${p.profiles?.full_name || '—'}</td>
-                    <td><span class="code-tag">${p.bag_code || '—'}</span></td>
-                    <td>${itemNames}</td>
-                    <td><span class="status-badge badge-approved">FULFILLED</span></td>
-                    <td><button onclick="deleteProposalRow(${p.id})" style="padding:4px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button></td>
-                </tr>
-            `
-        }).join('')
+    const itemNames = p.proposal_items.map(i => {
+        const name = i.components?.name || i.custom_name || 'Custom'
+        return `${name} (x${i.qty_requested})`
+    }).join(', ')
+    return `
+        <tr>
+            <td>${p.dispensed_at ? new Date(p.dispensed_at).toLocaleDateString('en-MY') : '—'}</td>
+            <td style="font-weight:600;">${p.profiles?.full_name || '—'}</td>
+            <td><span class="code-tag">${p.bag_code || '—'}</span></td>
+            <td>${itemNames}</td>
+            <td><span class="status-badge badge-approved">FULFILLED</span></td>
+        </tr>
+    `
+}).join('')
 
     // 3. Isolated Functional Core: Monthly Metric Analytics Computation Engine
     function calculateMonthlyMetrics() {
@@ -1736,33 +1734,6 @@ export async function renderEnhancedHistory() {
     calculateMonthlyMetrics();
 }
 
-// ============================================================
-//  HISTORY PAGE — Delete and Clear function
-// ============================================================
-export async function deleteProposalRow(id) {
-    if (!confirm('Delete this record?')) return
-    const { error } = await supabase.from('proposals').delete().eq('id', id)
-    if (error) alert('Failed to delete: ' + error.message)
-    else renderEnhancedHistory()
-}
-
-export async function clearAllProposals() {
-    if (!confirm('Clear ALL proposal history? This cannot be undone.')) return
-    const { error } = await supabase.from('proposals').delete().neq('id', 0)
-    if (error) alert('Failed to clear: ' + error.message)
-    else renderEnhancedHistory()
-}
-
-export async function clearAllDispense() {
-    if (!confirm('Clear ALL dispense logs? This cannot be undone.')) return
-    const { error } = await supabase
-        .from('proposals')
-        .delete()
-        .in('store_status', ['Done', 'Collected'])
-    if (error) alert('Failed to clear: ' + error.message)
-    else renderEnhancedHistory()
-}
-
 
 // ============================================================
 //  REGISTER PAGE — Show/hide role-specific fields
@@ -1885,9 +1856,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.closeModal                = closeModal
     window.findNow                   = findNow
     window.editComponent             = editComponent
-    window.deleteProposalRow         = deleteProposalRow
-    window.clearAllProposals         = clearAllProposals
-    window.clearAllDispense          = clearAllDispense
     window.renderManagerStockLevels = renderManagerStockLevels
     // 0. Session validity check — runs on every page load
     // If the user was deleted from Supabase, force logout immediately
