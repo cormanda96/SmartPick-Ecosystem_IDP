@@ -379,8 +379,8 @@ export async function renderCatalog() {
 
     // Client-side search filter
     const filtered = searchTerm
-        ? items.filter(i => i.name.toLowerCase().includes(searchTerm))
-        : items
+        ? (items || []).filter(i => i.name.toLowerCase().includes(searchTerm))
+       : (items || [])
 
     grid.innerHTML = ''
 
@@ -671,18 +671,16 @@ export async function addNewComponent() {
 // ============================================================
 //  CATALOG — Filter (search box + category dropdown)
 // ============================================================
-export function filterCatalog() {
-    const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
-    const selectedCat = document.getElementById('categorySelect').value
+const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
+const selectedCat = document.getElementById('categorySelect').value || 'all'
 
-    if (selectedCat !== 'all') {
-        window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
-    } else {
-        window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
-    }
-
-    renderCatalog()
+if (selectedCat && selectedCat !== 'all') {
+    window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
+} else {
+    window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
 }
+
+renderCatalog()
 
 
 // ============================================================
