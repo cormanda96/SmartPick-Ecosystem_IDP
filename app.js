@@ -384,16 +384,10 @@ export async function renderCatalog() {
 
     grid.innerHTML = ''
 
+    // Keep hardcoded options from HTML, just sync selected state
     const catSelect = document.getElementById('categorySelect')
-    let cats = []
-    const { data: fetchedCats } = await supabase.from('categories').select('name').order('name')
-    cats = fetchedCats || []
-
-    if (catSelect) {
-        catSelect.innerHTML = '<option value="all">All Categories</option>'
-        cats.forEach(c => {
-            catSelect.innerHTML += `<option value="${c.name}" ${urlFilter === c.name ? 'selected' : ''}>${c.name}</option>`
-        })
+    if (catSelect && urlFilter) {
+        catSelect.value = urlFilter
     }
 
     filtered.forEach(item => {
