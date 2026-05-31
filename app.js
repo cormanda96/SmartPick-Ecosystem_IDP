@@ -339,10 +339,9 @@ export async function renderCatalog() {
     const grid = document.getElementById('catalog-grid')
     if (!grid) return
 
-    const role       = localStorage.getItem('userRole') || 'student'
     const urlParams  = new URLSearchParams(window.location.search)
-    const urlFilter  = urlParams.get('filter')
-    const searchTerm = (urlParams.get('search') || '').toLowerCase()
+    const urlFilter  = urlParams.get('filter') || (document.getElementById('categorySelect')?.value !== 'all' ? document.getElementById('categorySelect')?.value : null)
+    const searchTerm = (urlParams.get('search') || document.getElementById('catalogSearch')?.value || '').toLowerCase()
 
     // Build query
     // Pre-fetch all occupied drawers so catalog cards know which are taken
