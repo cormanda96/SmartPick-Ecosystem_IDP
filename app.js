@@ -591,76 +591,71 @@ export async function addNewComponent() {
     document.getElementById('cancel-new-comp').onclick = () => modal.remove()
 
     document.getElementById('save-new-comp').onclick = async () => {
-        const name      = document.getElementById('new-comp-name').value.trim()
-        const catId     = parseInt(document.getElementById('new-comp-cat').value)
-        const qty       = parseInt(document.getElementById('new-comp-qty').value) || 0
-        const rowNum    = parseInt(document.getElementById('new-comp-row').value) || 1
-        const drawerNum = parseInt(document.getElementById('new-comp-drawernum').value) || 1
-        const label     = document.getElementById('new-comp-label').value.trim().toUpperCase()
-        const colorCode = document.getElementById('new-comp-color').value.trim()
-        const ledRaw    = document.getElementById('new-comp-led').value.trim()
+    const name      = document.getElementById('new-comp-name').value.trim()
+    const catId     = parseInt(document.getElementById('new-comp-cat').value)
+    const qty       = parseInt(document.getElementById('new-comp-qty').value) || 0
+    const rowNum    = parseInt(document.getElementById('new-comp-row').value) || 1
+    const drawerNum = parseInt(document.getElementById('new-comp-drawernum').value) || 1
+    const label     = document.getElementById('new-comp-label').value.trim().toUpperCase()
+    const colorCode = document.getElementById('new-comp-color').value.trim()
+    const ledRaw    = document.getElementById('new-comp-led').value.trim()
 
-        if (!name) { alert('Please enter a component name.'); return }
-        if (!label) { alert('Please enter a drawer label (e.g. D1).'); return }
+    if (!name)  { alert('Please enter a component name.'); return }
+    if (!label) { alert('Please enter a drawer label (e.g. D1).'); return }
 
-        // Check if label already taken
-        if (occupiedMap[label]) {
-            alert(`Drawer ${label} is already taken by: ${occupiedMap[label]}`)
-            return
-        }
+    if (occupiedMap[label]) {
+        alert(`Drawer ${label} is already taken by: ${occupiedMap[label]}`)
+        return
+    }
 
-        // Check if drawer row exists already, if not create it
-        const { data: existingDrawer } = await supabase
+    const { data: existingDrawer } = await supabase
+        .from('drawers')
+        .select('id')
+        .eq('label', label)
+        .maybeSingle()
+
+    let finalDrawerId = null
+
+    if (existingDrawer) {
+        await supabase.from('drawers').update({
+            row_number: rowNum,
+            'drawer number': drawerNum,
+            color_code: colorCode,
+            led_index: ledRaw ? `{${ledRaw}}` : null
+        }).eq('label', label)
+        finalDrawerId = existingDrawer.id
+    } else {
+        const { data: newDrawer, error: drawerErr } = await supabase
             .from('drawers')
-            .select('id')
-            .eq('label', label)
-            .single()
-
-        let finalDrawerId = null
-
-        if (existingDrawer) {
-            // Update existing drawer with new values
-            await supabase.from('drawers').update({
+            .insert({
+                label: label,
+                component: name,
                 row_number: rowNum,
                 'drawer number': drawerNum,
                 color_code: colorCode,
-                led_index: ledRaw ? `{${ledRaw}}` : null
-            }).eq('label', label)
-            finalDrawerId = existingDrawer.id
-        } else {
-        // Create brand new drawer row
-            const { data: newDrawer, error: drawerErr } = await supabase
-                .from('drawers')
-                .insert({
-                    label: label,
-                    component: name,
-                    row_number: rowNum,
-                    'drawer number': drawerNum,
-                    color_code: colorCode,
-                    led_index: ledRaw ? `{${ledRaw}}` : null,
-                    dispatch_active: false
-                })
-                .select()
-                .single()
+                led_index: ledRaw ? `{${ledRaw}}` : null,
+                dispatch_active: false
+            })
+            .select()
+            .single()
 
-            if (drawerErr) { alert('Failed to create drawer: ' + drawerErr.message); return }
-            finalDrawerId = newDrawer.id
-        }
+        if (drawerErr) { alert('Failed to create drawer: ' + drawerErr.message); return }
+        finalDrawerId = newDrawer.id
+    }
 
-         // Insert component
-        const { error: compError } = await supabase.from('components').insert({
-            name: name,
-            category_id: catId,
-            qty: qty,
-            drawer_id: finalDrawerId
-        })
+    const { error: compError } = await supabase.from('components').insert({
+        name: name,
+        category_id: catId,
+        qty: qty,
+        drawer_id: finalDrawerId
+    })
 
-        if (compError) {
-            alert('Failed to save component: ' + compError.message)
-        } else {
-            modal.remove()
-            renderCatalog()
-        }
+    if (compError) {
+        alert('Failed to save component: ' + compError.message)
+    } else {
+        modal.remove()
+        renderCatalog()
+    }
     }
 }
 
