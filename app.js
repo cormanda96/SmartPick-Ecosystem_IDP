@@ -343,6 +343,9 @@ export async function renderCatalog() {
     const urlParams  = new URLSearchParams(window.location.search)
     const urlFilter  = urlParams.get('filter')
     const searchTerm = (urlParams.get('search') || '').toLowerCase()
+    // Show New Component button only for manager
+    const addBtn = document.getElementById('manager-add-btn')
+    if (addBtn) addBtn.style.display = role === 'manager' ? 'block' : 'none'
 
     // Build query
     // Pre-fetch all occupied drawers so catalog cards know which are taken
@@ -442,14 +445,7 @@ export async function renderCatalog() {
         grid.appendChild(card)
     })
 
-    // Add New Item button for manager
-    if (role === 'manager') {
-        const addCard = document.createElement('div')
-        addCard.className = 'component-card'
-        addCard.style.border = '2px dashed var(--main-blue)'
-        addCard.innerHTML = `<button onclick="addNewComponent()" class="btn-role" style="width:100%; height:100%;">+ Add New Item</button>`
-        grid.appendChild(addCard)
-    }
+    
 }
 
 
