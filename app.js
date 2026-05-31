@@ -356,7 +356,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label)')
+        .select('id, name, qty, categories(name), drawers(label, row_number, "drawer number", dispatch_active, color_code, led_index)')
         .order('name')
 
     if (urlFilter) {
@@ -406,9 +406,7 @@ export async function renderCatalog() {
         if (role === 'manager') {
             const drawer = item.drawers
             const row = drawer?.row_number ?? 'N/A'
-            const drawerNum = drawer?.label ?? 'N/A'
-            const colorCode = drawer?.color_code ?? 'N/A'
-            const ledIndex = drawer?.led_index ?? 'N/A'
+            const drawerNum = drawer?.['drawer number'] ?? 'N/A'
 
             card.innerHTML = `
                 <h3>${item.name}</h3>
@@ -419,10 +417,6 @@ export async function renderCatalog() {
                 <div style="margin-top:8px; font-size:0.85rem; color:#444;">
                     <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
                     <span>Drawer: <strong>${drawerNum}</strong></span>
-                </div>
-                <div style="margin-top:4px; font-size:0.8rem; color:#666;">
-                    <span>Color: <strong>${colorCode}</strong></span> &nbsp;|&nbsp;
-                    <span>LED: <strong>${ledIndex}</strong></span>
                 </div>
                 <div style="margin-top:10px; display:flex; gap:8px;">
                     <button onclick="findNow(${item.id}, '${drawer?.label || ''}')"
@@ -707,12 +701,11 @@ export async function findNow(componentId, drawerLabel) {
     modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;"
     modal.innerHTML = `
         <div style="background:white; padding:30px; border-radius:12px; width:320px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-            <div style="font-size:2rem;">💡</div>
             <h3 style="color:var(--main-blue); margin:10px 0;">LED Activated!</h3>
             <p style="color:#555;">Drawer <strong>${drawerLabel}</strong> is now lit up.</p>
             <p style="color:#555;">Go to the rack and locate the glowing drawer.</p>
             <button id="done-btn" style="margin-top:15px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:1rem;">
-                ✅ DONE
+                DONE
             </button>
         </div>
     `
