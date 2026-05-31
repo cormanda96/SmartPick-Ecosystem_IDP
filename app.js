@@ -282,7 +282,7 @@ export async function renderGlobalNavigation() {
     if (role === 'supervisor') dashboardLink = 'dashboard2.html'
     if (role === 'manager')    dashboardLink = 'dashboard3.html'
 
-    sidebarNav.innerHTML = `<a href="${dashboardLink}" class="sidebar-link">🏠 Home</a>`
+    sidebarNav.innerHTML = `<a href="${dashboardLink}" class="sidebar-link">Home</a>`
 
     sidebarNav.innerHTML += `<a href="catalog.html" class="sidebar-link">Catalog</a>`
 
@@ -356,7 +356,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label, "drawer number", led_index)')
+        .select('id, name, qty, categories(name), drawers(label, row_number, "drawer number", led_index, color_code)')
         .order('name')
 
     if (urlFilter) {
@@ -369,6 +369,7 @@ export async function renderCatalog() {
 
         if (cat) query = query.eq('category_id', cat.id)
     }
+    console.log('items:', items, 'error:', error)
 
     const { data: items, error } = await query
 
