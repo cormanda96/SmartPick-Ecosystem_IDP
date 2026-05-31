@@ -1410,12 +1410,11 @@ export async function sendToESP32(ledIndex, rackCode) {
         modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:20000; display:flex; align-items:center; justify-content:center;"
         modal.innerHTML = `
             <div style="background:white; padding:30px; border-radius:12px; width:320px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-                <div style="font-size:2rem;">💡</div>
                 <h3 style="color:var(--main-blue); margin:10px 0;">LED Activated!</h3>
                 <p style="color:#555;">Rack <strong>${rackCode}</strong> is now lit up.</p>
                 <p style="color:#555;">Go to the rack and collect the component.</p>
                 <button id="esp-done-btn" style="margin-top:15px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:1rem;">
-                    ✅ DONE
+                    DONE
                 </button>
             </div>
         `
@@ -1494,7 +1493,7 @@ export async function finalizePacking(id) {
                 .update({ dispatch_active: false })
                 .in('label', labels)
         }
-        
+
         alert(`Success! Bag Generated: ${bagCode}`)
     }
 
