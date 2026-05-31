@@ -1657,7 +1657,7 @@ document.getElementById('total-added-val').innerText = mockAddedValue
         wrapper.innerHTML = '<canvas id="movementChart"></canvas>';
         const targetCanvas = document.getElementById('movementChart');
 
-        const totalDataSum = totalDispensedCount + totalAddedCount;
+        const totalDataSum = totalDispensedCount + mockAddedCount;
 
         if (totalDataSum > 0 && targetCanvas) {
             activeMovementChart = new Chart(targetCanvas, {
