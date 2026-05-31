@@ -356,7 +356,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label)')
+        .select('id, name, qty, categories(name), drawers(label, row_number, dispatch_active, color_code, led_index)')
         .order('name')
 
     if (urlFilter) {
@@ -443,12 +443,25 @@ export async function renderCatalog() {
                 <button class="btn-remove" style="margin-top:12px; width:100%;" onclick="deleteComponent(${item.id})">Delete Item</button>
             `;
         } else {
+            const drawer = item.drawers
+            const row = drawer?.row_number ?? 'N/A'
+            const drawerNum = drawer?.label ?? 'N/A'
+
             card.innerHTML = `
                 <h3>${item.name}</h3>
                 <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
                 <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">
                     Stock: ${item.qty}
                 </span>
+                <div style="margin-top:8px; font-size:0.85rem; color:#444;">
+                    <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
+                    <span>Drawer: <strong>${drawerNum}</strong></span>
+                </div>
+                <button 
+                    onclick="findNow(${item.id}, '${drawer?.label || ''}')" 
+                    style="margin-top:10px; width:100%; padding:8px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                    Find Now
+                </button>
             `
         }
         grid.appendChild(card)
@@ -682,6 +695,46 @@ export function filterCatalog() {
     }
 
 renderCatalog()
+}
+
+// ============================================================
+//  CATALOG — Find Now (LED highlight + reset)
+// ============================================================
+export async function findNow(componentId, drawerLabel) {
+    // Set dispatch_active = TRUE for this drawer
+    const { error } = await supabase
+        .from('drawers')
+        .update({ dispatch_active: true })
+        .eq('label', drawerLabel)
+
+    if (error) {
+        alert('Failed to activate LED: ' + error.message)
+        return
+    }
+
+    // Show popup with location info
+    const modal = document.createElement('div')
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;"
+    modal.innerHTML = `
+        <div style="background:white; padding:30px; border-radius:12px; width:320px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+            <h3 style="color:var(--main-blue); margin:10px 0;">LED Activated!</h3>
+            <p style="color:#555;">Drawer <strong>${drawerLabel}</strong> is now lit up.</p>
+            <p style="color:#555;">Go to the rack and locate the glowing drawer.</p>
+            <button id="done-btn" style="margin-top:15px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:1rem;">
+                 DONE
+            </button>
+        </div>
+    `
+    document.body.appendChild(modal)
+
+    // DONE button — reset LED back to FALSE
+    document.getElementById('done-btn').onclick = async () => {
+        await supabase
+            .from('drawers')
+            .update({ dispatch_active: false })
+            .eq('label', drawerLabel)
+        modal.remove()
+    }
 }
 
 
@@ -1539,6 +1592,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.assignDrawer              = assignDrawer
     window.highlightAllDrawers       = highlightAllDrawers
     window.closeModal                = closeModal
+    window.findNow                   = findNow
 
     // 0. Session validity check — runs on every page load
     // If the user was deleted from Supabase, force logout immediately
