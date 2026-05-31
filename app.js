@@ -406,7 +406,7 @@ export async function renderCatalog() {
         if (role === 'manager') {
             const drawer = item.drawers
             const row = drawer?.row_number ?? 'N/A'
-            const drawerNum = drawer?.['drawer number'] ?? 'N/A'
+            const drawerNum = drawer?.label ?? 'N/A'
 
             card.innerHTML = `
                 <h3>${item.name}</h3>
