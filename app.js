@@ -1594,7 +1594,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.closeModal                = closeModal
     window.findNow                   = findNow
 
-    // 0. Session validity check — runs on every page load
+    // 0. Session validity check — runs on every page loada
     // If the user was deleted from Supabase, force logout immediately
     const { data: { user: activeUser } } = await supabase.auth.getUser()
     if (activeUser) {
