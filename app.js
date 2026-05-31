@@ -671,16 +671,18 @@ export async function addNewComponent() {
 // ============================================================
 //  CATALOG — Filter (search box + category dropdown)
 // ============================================================
-const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
-const selectedCat = document.getElementById('categorySelect').value || 'all'
+export function filterCatalog() {
+    const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
+    const selectedCat = document.getElementById('categorySelect').value
 
-if (selectedCat && selectedCat !== 'all') {
-    window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
-} else {
-    window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
+    if (selectedCat !== 'all') {
+        window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
+    } else {
+        window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
+    }
+
+    renderCatalog()
 }
-
-renderCatalog()
 
 
 // ============================================================
