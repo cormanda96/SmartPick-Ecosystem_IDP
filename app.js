@@ -624,7 +624,7 @@ export async function addNewComponent() {
                 row_number: rowNum,
                 'drawer number': drawerNum,
                 color_code: colorCode,
-                led_index: ledRaw ? `{${ledRaw}}` : null
+                led_index: ledRaw ? ledRaw.split(',').map(s => s.trim()) : null
             }).eq('label', label)
             finalDrawerId = existingDrawer.id
         } else {
