@@ -282,35 +282,29 @@ export async function renderGlobalNavigation() {
     if (role === 'supervisor') dashboardLink = 'dashboard2.html'
     if (role === 'manager')    dashboardLink = 'dashboard3.html'
 
-    sidebarNav.innerHTML = `<a href="${dashboardLink}" class="sidebar-link">Dashboard</a>`
+    sidebarNav.innerHTML = `<a href="${dashboardLink}" class="sidebar-link">🏠 Home</a>`
 
-    const categoryLinks = (categories || []).map(cat =>
-        `<a href="catalog.html?filter=${encodeURIComponent(cat.name)}" class="sub-link">${cat.name}</a>`
-    ).join('')
-
-    sidebarNav.innerHTML += `
-        <div class="sidebar-dropdown">
-            <button class="dropdown-btn" onclick="this.nextElementSibling.classList.toggle('show')">
-                Browse Categories <span style="float:right;">▾</span>
-            </button>
-            <div class="dropdown-container" id="category-dropdown">
-                <input type="text" id="cat-search" placeholder="Search category..."
-                       onkeyup="filterSidebarCategories(this.value)"
-                       style="width:90%; margin: 5px 5%; padding: 5px; border-radius: 4px; border:1px solid #ddd;">
-                ${categoryLinks}
-            </div>
-        </div>
-    `
+    sidebarNav.innerHTML += `<a href="catalog.html" class="sidebar-link">Catalog</a>`
 
     if (role === 'student') {
         sidebarNav.innerHTML += `<a href="submission.html" class="sidebar-link">Submit Proposal</a>`
         sidebarNav.innerHTML += `<a href="status.html"     class="sidebar-link">My Status</a>`
     } else if (role === 'supervisor') {
-        sidebarNav.innerHTML += `<a href="review.html" class="sidebar-link">Review Pending</a>`
+        sidebarNav.innerHTML += `<a href="review.html"  class="sidebar-link">Review Pending</a>`
     } else if (role === 'manager') {
         sidebarNav.innerHTML += `<a href="catalog.html"  class="sidebar-link">Update Catalog</a>`
-        sidebarNav.innerHTML += `<a href="dispense.html" class="sidebar-link">Component Student</a>`
+        sidebarNav.innerHTML += `<a href="dispense.html" class="sidebar-link">Component Request</a>`
         sidebarNav.innerHTML += `<a href="history.html"  class="sidebar-link">History</a>`
+    }
+    
+    // Render category tab buttons inside catalog page
+    const catNav = document.getElementById('catalog-category-nav')
+    if (catNav && cats) {
+        catNav.innerHTML = `<button onclick="filterCatalog()" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${!urlFilter ? 'var(--main-blue)' : 'white'}; color:${!urlFilter ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">All</button>`
+        cats.forEach(c => {
+            const isActive = urlFilter === c.name
+            catNav.innerHTML += `<button onclick="window.location.href='catalog.html?filter=${encodeURIComponent(c.name)}'" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${isActive ? 'var(--main-blue)' : 'white'}; color:${isActive ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">${c.name}</button>`
+        })
     }
 }
 
