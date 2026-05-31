@@ -345,7 +345,7 @@ export async function renderCatalog() {
     const searchTerm = (urlParams.get('search') || '').toLowerCase()
     // Show New Component button only for manager
     const addBtn = document.getElementById('manager-add-btn')
-    if (addBtn) addBtn.style.display = role === 'manager' ? 'block' : 'none'
+    if (addBtn) addBtn.style.display = role === 'manager' ? 'inline-block' : 'none'
 
     // Build query
     // Pre-fetch all occupied drawers so catalog cards know which are taken
