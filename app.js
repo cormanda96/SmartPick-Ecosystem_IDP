@@ -1596,7 +1596,9 @@ export async function renderEnhancedHistory() {
         document.getElementById('total-dispensed-val').innerText = totalDispensedCount
 
         const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120
-document.getElementById('total-added-val').innerText = mockAddedValue
+            document.getElementById('total-added-val').innerText = 'N/A'
+            const addedBreakdown = document.getElementById('added-breakdown')
+            if (addedBreakdown) addedBreakdown.innerHTML = ''
 
         // Build breakdown list
         const breakdownContainer = document.getElementById('dispensed-breakdown')
