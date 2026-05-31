@@ -1596,9 +1596,7 @@ export async function renderEnhancedHistory() {
         document.getElementById('total-dispensed-val').innerText = totalDispensedCount
 
         const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120
-            document.getElementById('total-added-val').innerText = 'N/A'
-            const addedBreakdown = document.getElementById('added-breakdown')
-            if (addedBreakdown) addedBreakdown.innerHTML = ''
+            document.getElementById('total-added-val').innerText = mockAddedValue
 
         // Build breakdown list
         const breakdownContainer = document.getElementById('dispensed-breakdown')
@@ -1634,6 +1632,50 @@ export async function renderEnhancedHistory() {
                             </thead>
                             <tbody>
                                 ${entries.map(([name, qty]) => `
+                                    <tr>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5;">${name}</td>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600;">${qty}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </details>
+                `
+            }
+        }
+        const addedBreakdown = document.getElementById('added-breakdown')
+        if (addedBreakdown) {
+            const addedMap = {}
+            dispensed.forEach(p => {
+                if (!p.dispensed_at) return
+                const dDate = new Date(p.dispensed_at)
+                const dYear = dDate.getFullYear().toString()
+                const dMonth = (dDate.getMonth() + 1).toString().padStart(2, '0')
+                if (dYear !== targetYear || dMonth !== targetMonth) return
+
+                p.proposal_items.forEach(item => {
+                    const name = item.components?.name || 'Custom'
+                    if (!addedMap[name]) addedMap[name] = 0
+                    addedMap[name] += (item.qty_requested || 0)
+                })
+            })
+
+            const addedEntries = Object.entries(addedMap)
+            if (addedEntries.length === 0) {
+                addedBreakdown.innerHTML = '<p style="color:#999; font-size:0.85rem;">No data for this month.</p>'
+            } else {
+                addedBreakdown.innerHTML = `
+                    <details style="margin-top:10px;">
+                        <summary style="cursor:pointer; font-weight:600; color:#28a745; font-size:0.9rem;">View Added Stock ▾</summary>
+                        <table style="width:100%; margin-top:10px; border-collapse:collapse; font-size:0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Component</th>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${addedEntries.map(([name, qty]) => `
                                     <tr>
                                         <td style="padding:6px; border-bottom:1px solid #f5f5f5;">${name}</td>
                                         <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600;">${qty}</td>
