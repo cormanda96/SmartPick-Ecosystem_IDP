@@ -384,12 +384,14 @@ export async function renderCatalog() {
 
     grid.innerHTML = ''
 
-    // Populate category dropdown
     const catSelect = document.getElementById('categorySelect')
+    let cats = []
+    const { data: fetchedCats } = await supabase.from('categories').select('name').order('name')
+    cats = fetchedCats || []
+
     if (catSelect) {
-        const { data: cats } = await supabase.from('categories').select('name').order('name')
         catSelect.innerHTML = '<option value="all">All Categories</option>'
-        ;(cats || []).forEach(c => {
+        cats.forEach(c => {
             catSelect.innerHTML += `<option value="${c.name}" ${urlFilter === c.name ? 'selected' : ''}>${c.name}</option>`
         })
     }
