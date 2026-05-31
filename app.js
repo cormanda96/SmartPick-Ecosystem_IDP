@@ -356,7 +356,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label, row_number, dispatch_active, color_code, led_index)')
+        .select('id, name, qty, categories(name), drawers(label)')
         .order('name')
 
     if (urlFilter) {
@@ -384,10 +384,16 @@ export async function renderCatalog() {
 
     grid.innerHTML = ''
 
-    // Keep hardcoded options from HTML, just sync selected state
     const catSelect = document.getElementById('categorySelect')
-    if (catSelect && urlFilter) {
-        catSelect.value = urlFilter
+    let cats = []
+    const { data: fetchedCats } = await supabase.from('categories').select('name').order('name')
+    cats = fetchedCats || []
+
+    if (catSelect) {
+        catSelect.innerHTML = '<option value="all">All Categories</option>'
+        cats.forEach(c => {
+            catSelect.innerHTML += `<option value="${c.name}" ${urlFilter === c.name ? 'selected' : ''}>${c.name}</option>`
+        })
     }
 
     filtered.forEach(item => {
@@ -398,48 +404,11 @@ export async function renderCatalog() {
         }
 
         if (role === 'manager') {
-            const assignedDrawer = item.drawers;
-            const assignedLabel  = assignedDrawer ? assignedDrawer.label : '';
-
-            // 1. Fetch all matching drawer options from the database schema template array
-            const allDrawers = Array.from({ length: 99 }, (_, i) => `D${i + 1}`);
-
-            // 2. Generate the selection dropdown items cleanly
-            const drawerOptions = allDrawers.map(d => {
-                const isCurrent = d === assignedLabel;
-        
-                // A drawer should ONLY show as taken if another component is using it, 
-                // but it must remain selectable for THIS component card.
-                return `<option value="${d}" ${isCurrent ? 'selected' : ''}>
-                    ${d} ${isCurrent ? '✓' : ''}
-                </option>`;
-            }).join('');
-
-            card.innerHTML = `
-                <input type="text" value="${item.name}" class="mgr-input-name"
-                       oninput="updateComponent(${item.id}, 'name', this.value)">
-        
-                <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
-                    <label style="font-weight:600;">Stock:</label>
-                    <input type="number" value="${item.qty}" class="mgr-input-qty" style="width:70px;"
-                           oninput="updateComponent(${item.id}, 'qty', this.value)">
-                </div>
-
-                <div style="margin-top:10px;">
-                    <label style="font-size:0.8rem; color:#555; font-weight:600;">Assigned Rack Drawer:</label>
-                    <select class="mgr-input-name" style="margin-top:4px; padding:4px;"
-                            onchange="assignDrawer(${item.id}, this.value)">
-                        <option value="">-- Not Assigned --</option>
-                        ${drawerOptions}
-                    </select>
-                </div>
-        
-                <button class="btn-remove" style="margin-top:12px; width:100%;" onclick="deleteComponent(${item.id})">Delete Item</button>
-            `;
-        } else {
             const drawer = item.drawers
             const row = drawer?.row_number ?? 'N/A'
             const drawerNum = drawer?.label ?? 'N/A'
+            const colorCode = drawer?.color_code ?? 'N/A'
+            const ledIndex = drawer?.led_index ?? 'N/A'
 
             card.innerHTML = `
                 <h3>${item.name}</h3>
@@ -451,11 +420,29 @@ export async function renderCatalog() {
                     <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
                     <span>Drawer: <strong>${drawerNum}</strong></span>
                 </div>
-                <button 
-                    onclick="findNow(${item.id}, '${drawer?.label || ''}')" 
-                    style="margin-top:10px; width:100%; padding:8px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
-                    Find Now
-                </button>
+                <div style="margin-top:4px; font-size:0.8rem; color:#666;">
+                    <span>Color: <strong>${colorCode}</strong></span> &nbsp;|&nbsp;
+                    <span>LED: <strong>${ledIndex}</strong></span>
+                </div>
+                <div style="margin-top:10px; display:flex; gap:8px;">
+                    <button onclick="findNow(${item.id}, '${drawer?.label || ''}')"
+                        style="flex:1; padding:8px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                        Find Now
+                    </button>
+                    <button onclick="editComponent(${item.id}, '${item.name}', ${item.qty}, '${drawer?.row_number ?? ''}', '${drawer?.label ?? ''}', '${drawer?.color_code ?? ''}', '${drawer?.led_index ?? ''}')"
+                        style="flex:1; padding:8px; background:#f0a500; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                        Edit
+                    </button>
+                </div>
+                <button class="btn-remove" style="margin-top:8px; width:100%;" onclick="deleteComponent(${item.id})">Delete Item</button>
+        `
+        } else {
+            card.innerHTML = `
+                <h3>${item.name}</h3>
+                <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
+                <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">
+                    Stock: ${item.qty}
+                </span>
             `
         }
         grid.appendChild(card)
@@ -570,9 +557,9 @@ export async function addNewComponent() {
     const modal = document.createElement('div')
     modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;"
     modal.innerHTML = `
-        <div style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow: 0px 4px 15px rgba(0,0,0,0.2);">
+        <div style="background:white; padding:30px; border-radius:12px; width:420px; max-height:90vh; overflow-y:auto; box-shadow:0px 4px 15px rgba(0,0,0,0.2);">
             <h3 style="margin-top:0; color:var(--main-blue); margin-bottom:20px;">Add New Component</h3>
-            
+
             <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Component Name:</label>
             <input type="text" id="new-comp-name" placeholder="e.g. Resistor 470Ω, 5W" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
 
@@ -581,18 +568,27 @@ export async function addNewComponent() {
                 ${categoryOptions}
             </select>
 
-            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Starting Stock Quantity:</label>
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Stock Quantity:</label>
             <input type="number" id="new-comp-qty" value="100" min="0" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
 
-            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Assign Free Drawer or Type New Number:</label>
-            <input type="text" id="new-comp-drawer" list="drawer-list" placeholder="Pick a free slot or type a new code like D100" style="width:100%; padding:8px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
-            <datalist id="drawer-list">
-                ${drawerSuggestions}
-            </datalist>
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Row Number:</label>
+            <input type="number" id="new-comp-row" placeholder="e.g. 1" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Drawer Number:</label>
+            <input type="number" id="new-comp-drawernum" placeholder="e.g. 3" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Label (e.g. D1):</label>
+            <input type="text" id="new-comp-label" placeholder="e.g. D1" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Color Code:</label>
+            <input type="text" id="new-comp-color" placeholder="e.g. green, red, blue" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">LED Index (e.g. 1,2):</label>
+            <input type="text" id="new-comp-led" placeholder="e.g. 1,2" style="width:100%; padding:8px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
 
             <div style="display:flex; gap:10px; justify-content:flex-end;">
                 <button id="cancel-new-comp" style="padding:8px 16px; background:#ccc; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Cancel</button>
-                <button id="save-new-comp" style="padding:8px 16px; background:var(--open-green, green); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Save Item</button>
+                <button id="save-new-comp" style="padding:8px 16px; background:green; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Save Item</button>
             </div>
         </div>
     `
@@ -601,63 +597,63 @@ export async function addNewComponent() {
     document.getElementById('cancel-new-comp').onclick = () => modal.remove()
 
     document.getElementById('save-new-comp').onclick = async () => {
-        const name = document.getElementById('new-comp-name').value.trim()
-        const catId = parseInt(document.getElementById('new-comp-cat').value)
-        const qty = parseInt(document.getElementById('new-comp-qty').value) || 0
-        const typedDrawerLabel = document.getElementById('new-comp-drawer').value.trim().toUpperCase()
+        const name      = document.getElementById('new-comp-name').value.trim()
+        const catId     = parseInt(document.getElementById('new-comp-cat').value)
+        const qty       = parseInt(document.getElementById('new-comp-qty').value) || 0
+        const rowNum    = parseInt(document.getElementById('new-comp-row').value) || 1
+        const drawerNum = parseInt(document.getElementById('new-comp-drawernum').value) || 1
+        const label     = document.getElementById('new-comp-label').value.trim().toUpperCase()
+        const colorCode = document.getElementById('new-comp-color').value.trim()
+        const ledRaw    = document.getElementById('new-comp-led').value.trim()
 
-        if (!name) {
-            alert('Please enter a component name.')
+        if (!name) { alert('Please enter a component name.'); return }
+        if (!label) { alert('Please enter a drawer label (e.g. D1).'); return }
+
+        // Check if label already taken
+        if (occupiedMap[label]) {
+            alert(`Drawer ${label} is already taken by: ${occupiedMap[label]}`)
             return
         }
 
+        // Check if drawer row exists already, if not create it
+        const { data: existingDrawer } = await supabase
+            .from('drawers')
+            .select('id')
+            .eq('label', label)
+            .single()
+
         let finalDrawerId = null
 
-        if (typedDrawerLabel) {
-            // Block submissions if a user manually forces a taken drawer label
-            if (occupiedMap[typedDrawerLabel]) {
-                alert(`Error: Drawer ${typedDrawerLabel} is already taken! Please pick a free slot or type a new drawer number.`);
-                return
-            }
-
-            const { data: existingRow } = await supabase
+        if (existingDrawer) {
+            // Update existing drawer with new values
+            await supabase.from('drawers').update({
+                row_number: rowNum,
+                'drawer number': drawerNum,
+                color_code: colorCode,
+                led_index: ledRaw
+            }).eq('label', label)
+            finalDrawerId = existingDrawer.id
+        } else {
+        // Create brand new drawer row
+            const { data: newDrawer, error: drawerErr } = await supabase
                 .from('drawers')
-                .select('id')
-                .eq('label', typedDrawerLabel)
+                .insert({
+                    label: label,
+                    component: name,
+                    row_number: rowNum,
+                    'drawer number': drawerNum,
+                    color_code: colorCode,
+                    led_index: ledRaw,
+                    dispatch_active: false
+                })
+                .select()
                 .single()
 
-            if (existingRow) {
-                finalDrawerId = existingRow.id
-            } else {
-                // Auto-generate brand-new drawer row parameters safely
-                const totalDrawersCount = (existingDrawers || []).length
-                const nextId = totalDrawersCount + 1
-                const mockRowNumber = Math.ceil(nextId / 16)
-                const mockDrawerNumber = ((nextId - 1) % 16) + 1
-                const mockLedStart = (nextId * 4) - 3
-                const mockLedEnd = nextId * 4
-
-                const { data: newDrawer, error: createDrawerError } = await supabase
-                    .from('drawers')
-                    .insert({
-                        id: nextId,
-                        label: typedDrawerLabel,
-                        component: name,
-                        row_number: mockRowNumber,
-                        "drawer number": mockDrawerNumber,
-                        led_index: `{${mockLedStart},${mockLedEnd}}` // Fixed array literal
-                    })
-                    .select()
-                    .single()
-
-                if (createDrawerError) {
-                    alert('Failed to create new drawer slot: ' + createDrawerError.message)
-                    return
-                }
-                finalDrawerId = newDrawer.id
-            }
+            if (drawerErr) { alert('Failed to create drawer: ' + drawerErr.message); return }
+            finalDrawerId = newDrawer.id
         }
 
+         // Insert component
         const { error: compError } = await supabase.from('components').insert({
             name: name,
             category_id: catId,
@@ -711,11 +707,12 @@ export async function findNow(componentId, drawerLabel) {
     modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;"
     modal.innerHTML = `
         <div style="background:white; padding:30px; border-radius:12px; width:320px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+            <div style="font-size:2rem;">💡</div>
             <h3 style="color:var(--main-blue); margin:10px 0;">LED Activated!</h3>
             <p style="color:#555;">Drawer <strong>${drawerLabel}</strong> is now lit up.</p>
             <p style="color:#555;">Go to the rack and locate the glowing drawer.</p>
             <button id="done-btn" style="margin-top:15px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:1rem;">
-                 DONE
+                ✅ DONE
             </button>
         </div>
     `
@@ -731,6 +728,81 @@ export async function findNow(componentId, drawerLabel) {
     }
 }
 
+// ============================================================
+//  CATALOG — Manager: Edit Component
+// ============================================================
+export async function editComponent(id, name, qty, rowNum, label, colorCode, ledIndex) {
+    const modal = document.createElement('div')
+    modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;"
+    modal.innerHTML = `
+        <div style="background:white; padding:30px; border-radius:12px; width:420px; max-height:90vh; overflow-y:auto; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0; color:var(--main-blue); margin-bottom:20px;">Edit Component</h3>
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Component Name:</label>
+            <input type="text" id="edit-name" value="${name}" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Stock:</label>
+            <input type="number" id="edit-qty" value="${qty}" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Row Number:</label>
+            <input type="number" id="edit-row" value="${rowNum}" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Drawer Label (e.g. D1):</label>
+            <input type="text" id="edit-label" value="${label}" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Color Code:</label>
+            <input type="text" id="edit-color" value="${colorCode}" placeholder="e.g. green, red, blue" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">LED Index (e.g. 1,2):</label>
+            <input type="text" id="edit-led" value="${ledIndex}" placeholder="e.g. 1,2" style="width:100%; padding:8px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+
+            <div style="display:flex; gap:10px; justify-content:flex-end;">
+                <button id="edit-cancel" style="padding:8px 16px; background:#ccc; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Cancel</button>
+                <button id="edit-save" style="padding:8px 16px; background:green; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">Save</button>
+            </div>
+        </div>
+    `
+    document.body.appendChild(modal)
+
+    document.getElementById('edit-cancel').onclick = () => modal.remove()
+
+    document.getElementById('edit-save').onclick = async () => {
+        const newName  = document.getElementById('edit-name').value.trim()
+        const newQty   = parseInt(document.getElementById('edit-qty').value)
+        const newRow   = parseInt(document.getElementById('edit-row').value)
+        const newLabel = document.getElementById('edit-label').value.trim().toUpperCase()
+        const newColor = document.getElementById('edit-color').value.trim()
+        const newLed   = document.getElementById('edit-led').value.trim()
+
+        if (!newName) { alert('Component name cannot be empty.'); return }
+
+        // Update component
+        const { error: compError } = await supabase
+            .from('components')
+            .update({ name: newName, qty: newQty })
+            .eq('id', id)
+
+        if (compError) { alert('Failed to update component: ' + compError.message); return }
+
+        // Update drawer using original label
+        if (label) {
+            const { error: drawerError } = await supabase
+                .from('drawers')
+                .update({
+                    row_number: newRow,
+                    label: newLabel,
+                    color_code: newColor,
+                    led_index: newLed
+                })
+                .eq('label', label)
+
+            if (drawerError) { alert('Failed to update drawer: ' + drawerError.message); return }
+        }
+
+        modal.remove()
+        renderCatalog()
+    }
+}
 
 // ============================================================
 //  SUBMISSION — Populate component dropdown
@@ -1587,8 +1659,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.highlightAllDrawers       = highlightAllDrawers
     window.closeModal                = closeModal
     window.findNow                   = findNow
-
-    // 0. Session validity check — runs on every page loada
+    window.editComponent             = editComponent
+    // 0. Session validity check — runs on every page load
     // If the user was deleted from Supabase, force logout immediately
     const { data: { user: activeUser } } = await supabase.auth.getUser()
     if (activeUser) {
