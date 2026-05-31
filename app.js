@@ -379,8 +379,8 @@ export async function renderCatalog() {
 
     // Client-side search filter
     const filtered = searchTerm
-        ? (items || []).filter(i => i.name.toLowerCase().includes(searchTerm))
-       : (items || [])
+        ? items.filter(i => i.name.toLowerCase().includes(searchTerm))
+        : items
 
     grid.innerHTML = ''
 
