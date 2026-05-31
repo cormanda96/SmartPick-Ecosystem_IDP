@@ -339,23 +339,10 @@ export async function renderCatalog() {
     const grid = document.getElementById('catalog-grid')
     if (!grid) return
 
-    const role       = localStorage.getItem('userRole') || 'student'
-    const urlParams  = new URLSearchParams(window.location.search)
-    const urlFilter  = urlParams.get('filter')
+    const role      = localStorage.getItem('userRole') || 'student'
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlFilter = urlParams.get('filter')
     const searchTerm = (urlParams.get('search') || '').toLowerCase()
-    // Show New Component button only for manager
-    const addBtn = document.getElementById('manager-add-btn')
-    if (addBtn) addBtn.style.display = role === 'manager' ? 'inline-block' : 'none'
-
-    // Build query
-    // Pre-fetch all occupied drawers so catalog cards know which are taken
-    const { data: allComps } = await supabase
-        .from('components')
-        .select('drawers(label)')
-    window._occupiedDrawers = {}
-    ;(allComps || []).forEach(c => {
-        if (c.drawers?.label) window._occupiedDrawers[c.drawers.label] = true
-    })
 
     let query = supabase
         .from('components')
@@ -363,13 +350,11 @@ export async function renderCatalog() {
         .order('name')
 
     if (urlFilter) {
-        // Filter by category name via join
         const { data: cat } = await supabase
             .from('categories')
             .select('id')
             .eq('name', urlFilter)
             .single()
-
         if (cat) query = query.eq('category_id', cat.id)
     }
 
@@ -380,43 +365,48 @@ export async function renderCatalog() {
         return
     }
 
-    // Client-side search filter
     const filtered = searchTerm
         ? (items || []).filter(i => i.name.toLowerCase().includes(searchTerm))
         : (items || [])
 
-    grid.innerHTML = ''
-
-    const catSelect = document.getElementById('categorySelect')
-    let cats = []
-    const { data: fetchedCats } = await supabase.from('categories').select('name').order('name')
-    cats = fetchedCats || []
-
-    if (catSelect) {
-        catSelect.innerHTML = '<option value="all">All Categories</option>'
-        cats.forEach(c => {
-            catSelect.innerHTML += `<option value="${c.name}" ${urlFilter === c.name ? 'selected' : ''}>${c.name}</option>`
+    // Build controls
+    const controls = document.getElementById('catalog-controls')
+    if (controls) {
+        const { data: cats } = await supabase.from('categories').select('name').order('name')
+        let catOptions = '<option value="all">All Categories</option>'
+        ;(cats || []).forEach(c => {
+            catOptions += `<option value="${c.name}" ${urlFilter === c.name ? 'selected' : ''}>${c.name}</option>`
         })
+        controls.innerHTML = `
+            <input type="text" id="catalogSearch" placeholder="Search components..."
+                   onkeyup="filterCatalog()" value="${searchTerm}"
+                   style="padding:8px 12px; border:1px solid #ddd; border-radius:6px; min-width:220px;">
+            <select id="categorySelect" onchange="filterCatalog()"
+                    style="padding:8px; border:1px solid #ddd; border-radius:6px;">
+                ${catOptions}
+            </select>
+            ${role === 'manager' ? `<button onclick="addNewComponent()"
+                style="padding:8px 16px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; white-space:nowrap;">
+                + New Component</button>` : ''}
+        `
     }
+
+    grid.innerHTML = ''
 
     filtered.forEach(item => {
         const card = document.createElement('div')
         card.className = 'component-card'
-        if (item.qty === 0 && role !== 'manager') {
-            card.classList.add('out-of-stock')
-        }
+        if (item.qty === 0 && role !== 'manager') card.classList.add('out-of-stock')
+
+        const drawer = item.drawers
+        const row = drawer?.row_number ?? 'N/A'
+        const drawerNum = drawer?.['drawer number'] ?? 'N/A'
 
         if (role === 'manager') {
-            const drawer = item.drawers
-            const row = drawer?.row_number ?? 'N/A'
-            const drawerNum = drawer?.label ?? 'N/A'
-
             card.innerHTML = `
                 <h3>${item.name}</h3>
                 <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
-                <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">
-                    Stock: ${item.qty}
-                </span>
+                <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">Stock: ${item.qty}</span>
                 <div style="margin-top:8px; font-size:0.85rem; color:#444;">
                     <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
                     <span>Drawer: <strong>${drawerNum}</strong></span>
@@ -432,20 +422,24 @@ export async function renderCatalog() {
                     </button>
                 </div>
                 <button class="btn-remove" style="margin-top:8px; width:100%;" onclick="deleteComponent(${item.id})">Delete Item</button>
-        `
+            `
         } else {
             card.innerHTML = `
                 <h3>${item.name}</h3>
                 <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
-                <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">
-                    Stock: ${item.qty}
-                </span>
+                <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">Stock: ${item.qty}</span>
+                <div style="margin-top:8px; font-size:0.85rem; color:#444;">
+                    <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
+                    <span>Drawer: <strong>${drawerNum}</strong></span>
+                </div>
+                <button onclick="findNow(${item.id}, '${drawer?.label || ''}')"
+                    style="margin-top:10px; width:100%; padding:8px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
+                    Find Now
+                </button>
             `
         }
         grid.appendChild(card)
     })
-
-    
 }
 
 
