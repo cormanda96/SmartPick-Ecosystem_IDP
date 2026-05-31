@@ -356,7 +356,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label, row_number, "drawer number", led_index, color_code)')
+        .select('id, name, qty, categories(name), drawers(label)')
         .order('name')
 
     if (urlFilter) {
@@ -369,7 +369,6 @@ export async function renderCatalog() {
 
         if (cat) query = query.eq('category_id', cat.id)
     }
-    console.log('items:', items, 'error:', error)
 
     const { data: items, error } = await query
 
