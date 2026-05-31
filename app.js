@@ -1547,6 +1547,7 @@ export async function renderEnhancedHistory() {
             <td>${p.project_name}</td>
             <td><span class="status-badge badge-${p.supervisor_status.toLowerCase()}">${p.supervisor_status}</span></td>
             <td style="font-style:italic; color:#777;">${p.feedback || '—'}</td>
+            <td><button onclick="deleteProposalRow(${p.id})" style="padding:4px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button></td>
         </tr>
     `).join('')
 
@@ -1566,6 +1567,7 @@ export async function renderEnhancedHistory() {
                     <td><span class="code-tag">${p.bag_code || '—'}</span></td>
                     <td>${itemNames}</td>
                     <td><span class="status-badge badge-approved">FULFILLED</span></td>
+                    <td><button onclick="deleteProposalRow(${p.id})" style="padding:4px 10px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:0.8rem;">Delete</button></td>
                 </tr>
             `
         }).join('')
@@ -1594,8 +1596,57 @@ export async function renderEnhancedHistory() {
         // Update display numbers
         document.getElementById('total-dispensed-val').innerText = totalDispensedCount
 
-        const mockAddedValue = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 1.5) : 120
-        document.getElementById('total-added-val').innerText = mockAddedValue
+        const { data: stockLogs } = await supabase
+            .from('components')
+            .select('name, qty, categories(name), updated_at')
+            .order('updated_at', { ascending: false })
+
+        let totalAddedCount = 0
+        const addedItems = []
+
+        ;(stockLogs || []).forEach(c => {
+            if (!c.updated_at) return
+            const uDate = new Date(c.updated_at)
+            const uYear = uDate.getFullYear().toString()
+            const uMonth = (uDate.getMonth() + 1).toString().padStart(2, '0')
+            if (uYear === targetYear && uMonth === targetMonth) {
+                totalAddedCount += (c.qty || 0)
+                addedItems.push({ name: c.name, qty: c.qty, category: c.categories?.name || 'N/A' })
+            }
+        })
+
+        document.getElementById('total-added-val').innerText = totalAddedCount
+
+        const addedBreakdown = document.getElementById('added-breakdown')
+        if (addedBreakdown) {
+            if (addedItems.length === 0) {
+                addedBreakdown.innerHTML = '<p style="color:#999; font-size:0.85rem;">No stock added this month.</p>'
+            } else {
+                addedBreakdown.innerHTML = `
+                    <details style="margin-top:10px;">
+                        <summary style="cursor:pointer; font-weight:600; color:#28a745; font-size:0.9rem;">View Added Stock ▾</summary>
+                        <table style="width:100%; margin-top:10px; border-collapse:collapse; font-size:0.85rem;">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Component</th>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Category</th>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${addedItems.map(i => `
+                                    <tr>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5;">${i.name}</td>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5; color:#666;">${i.category}</td>
+                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600;">${i.qty}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </details>
+                `
+            }
+        }
 
         // Build breakdown list
         const breakdownContainer = document.getElementById('dispensed-breakdown')
@@ -1690,6 +1741,34 @@ export async function renderEnhancedHistory() {
     // Trigger on structural processing completion
     calculateMonthlyMetrics();
 }
+
+// ============================================================
+//  HISTORY PAGE — Delete and Clear function
+// ============================================================
+export async function deleteProposalRow(id) {
+    if (!confirm('Delete this record?')) return
+    const { error } = await supabase.from('proposals').delete().eq('id', id)
+    if (error) alert('Failed to delete: ' + error.message)
+    else renderEnhancedHistory()
+}
+
+export async function clearAllProposals() {
+    if (!confirm('Clear ALL proposal history? This cannot be undone.')) return
+    const { error } = await supabase.from('proposals').delete().neq('id', 0)
+    if (error) alert('Failed to clear: ' + error.message)
+    else renderEnhancedHistory()
+}
+
+export async function clearAllDispense() {
+    if (!confirm('Clear ALL dispense logs? This cannot be undone.')) return
+    const { error } = await supabase
+        .from('proposals')
+        .delete()
+        .in('store_status', ['Done', 'Collected'])
+    if (error) alert('Failed to clear: ' + error.message)
+    else renderEnhancedHistory()
+}
+
 
 // ============================================================
 //  REGISTER PAGE — Show/hide role-specific fields
@@ -1812,6 +1891,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.closeModal                = closeModal
     window.findNow                   = findNow
     window.editComponent             = editComponent
+    window.deleteProposalRow         = deleteProposalRow
+    window.clearAllProposals         = clearAllProposals
+    window.clearAllDispense          = clearAllDispense
+    window.renderManagerStockLevels = renderManagerStockLevels
     // 0. Session validity check — runs on every page load
     // If the user was deleted from Supabase, force logout immediately
     const { data: { user: activeUser } } = await supabase.auth.getUser()
@@ -1881,5 +1964,24 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Manager dashboard chart
-    if (document.getElementById('category-tabs')) await renderManagerStockLevels()
+    if (document.getElementById('category-tabs')) {
+        await renderManagerStockLevels()
+
+        // Load pending packing count
+        const { data: pendingData } = await supabase
+            .from('proposals')
+            .select('id')
+            .eq('supervisor_status', 'Approved')
+            .eq('store_status', 'Waiting')
+        const pendingEl = document.getElementById('pending-packing-count')
+        if (pendingEl) pendingEl.innerText = (pendingData || []).length
+
+        // Load fulfilled dispense count
+        const { data: fulfilledData } = await supabase
+            .from('proposals')
+            .select('id')
+            .in('store_status', ['Done', 'Collected'])
+        const fulfilledEl = document.getElementById('fulfilled-count')
+        if (fulfilledEl) fulfilledEl.innerText = (fulfilledData || []).length
+    }
 })

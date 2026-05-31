@@ -81,7 +81,10 @@
         <h2 style="color: var(--main-blue); margin-bottom: 25px;">SYSTEM AUDIT HISTORY</h2>
 
         <div class="history-card">
-            <h3 style="color: #444; border-left: 4px solid var(--main-blue); padding-left: 10px;">PROPOSAL DECISIONS</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="color: #444; border-left: 4px solid var(--main-blue); padding-left: 10px;">PROPOSAL DECISIONS</h3>
+                <button onclick="clearAllProposals()" style="padding:6px 14px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">🗑️ Clear All</button>
+            </div>
             <table class="history-table">
                 <thead>
                     <tr>
@@ -90,6 +93,7 @@
                         <th>Project Name</th>
                         <th>Supervisor Status</th>
                         <th>Feedback</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="history-proposal-body"></tbody>
@@ -97,7 +101,10 @@
         </div>
 
         <div class="history-card">
-            <h3 style="color: #444; border-left: 4px solid var(--open-green); padding-left: 10px;">COMPONENT DISPENSE LOGS</h3>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="color: #444; border-left: 4px solid var(--open-green); padding-left: 10px;">COMPONENT DISPENSE LOGS</h3>
+                <button onclick="clearAllDispense()" style="padding:6px 14px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer; font-size:0.85rem; font-weight:600;">🗑️ Clear All</button>
+            </div>
             <table class="history-table">
                 <thead>
                     <tr>
@@ -106,6 +113,7 @@
                         <th>Bag Code</th>
                         <th>Components Handed Over</th>
                         <th>Store Status</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="history-dispense-body"></tbody>
@@ -120,8 +128,9 @@
             
                 <div style="margin-top: 20px; background: #f8fafc; padding: 20px; border-radius: 8px;">
                     <p>Total Dispensed: <strong id="total-dispensed-val">0</strong> items</p>
-                    <p>New Stock Added: <strong id="total-added-val">0</strong> items</p>
                     <div id="dispensed-breakdown"></div>
+                    <p style="margin-top:15px;">New Stock Added: <strong id="total-added-val">0</strong> items</p>
+                    <div id="added-breakdown"></div>
                 </div>
             </div>
 
