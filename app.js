@@ -625,15 +625,26 @@ export async function addNewComponent() {
         }).eq('label', label)
         finalDrawerId = existingDrawer.id
     } else {
+        const { data: maxRow } = await supabase
+            .from('drawers')
+            .select('id')
+            .order('id', { ascending: false })
+            .limit(1)
+            .single()
+
+        const nextId = (maxRow?.id || 0) + 1
+
         const { data: newDrawer, error: drawerErr } = await supabase
             .from('drawers')
             .insert({
+                id: nextId,
                 label: label,
                 component: name,
                 row_number: rowNum,
                 'drawer number': drawerNum,
                 color_code: colorCode,
-                led_index: ledRaw ? ledRaw.split(',').map(s => parseInt(s.trim())) : null,
+                color_code: colorCode,
+                led_index: ledRaw ? `{${ledRaw}}` : null,
                 dispatch_active: false
             })
             .select()
