@@ -1314,19 +1314,37 @@ export async function openProposal(id) {
             }
 
             try {
-                // Bulk update: Update ALL drawers whose labels are in our valid text list array
                 const { error } = await supabase
                     .from('drawers')
                     .update({ dispatch_active: true })
-                    .in('label', validRackLabels) // The .in() operator handles arrays smoothly!
-
+                    .in('label', validRackLabels)
                 if (error) throw error
 
-                alert(`Bulk Signal Sent! Activated Drawers: ${validRackLabels.join(', ')}`);
-                
+                // Show DONE popup for all drawers
+                const modal = document.createElement('div')
+                modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:20000; display:flex; align-items:center; justify-content:center;"
+                modal.innerHTML = `
+                    <div style="background:white; padding:30px; border-radius:12px; width:340px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                        <h3 style="color:var(--main-blue); margin:10px 0;">All LEDs Activated!</h3>
+                        <p style="color:#555;">Drawers lit up: <strong>${validRackLabels.join(', ')}</strong></p>
+                        <p style="color:#555;">Collect all components then press DONE.</p>
+                        <button id="search-all-done-btn" style="margin-top:15px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:1rem;">
+                            DONE — Turn Off All LEDs
+                        </button>
+                    </div>
+                `
+                document.body.appendChild(modal)
+
+                document.getElementById('search-all-done-btn').onclick = async () => {
+                    await supabase
+                        .from('drawers')
+                        .update({ dispatch_active: false })
+                        .in('label', validRackLabels)
+                    modal.remove()
+                }
+
             } catch (err) {
-                console.error("Bulk drawer status activation failed:", err.message)
-                alert("Failed to activate all drawers: " + err.message)
+                alert('Failed to activate all drawers: ' + err.message)
             }
         }
     }
@@ -1375,29 +1393,46 @@ export async function highlightAllDrawers() {
 // ============================================================
 export async function sendToESP32(ledIndex, rackCode) {
     try {
-        // 1. Update global store settings so hardware channels catch the integer
         const { error: storeError } = await supabase
             .from('store_settings')
             .update({ led_target: ledIndex })
             .eq('id', 1)
-
         if (storeError) throw storeError
 
-        // 2. Automatically flip the active status column for this specific rack label
         const { error: drawerError } = await supabase
             .from('drawers')
             .update({ dispatch_active: true })
-            .eq('label', rackCode) 
-
+            .eq('label', rackCode)
         if (drawerError) throw drawerError
 
-        alert(`Signal sent to Rack ${rackCode} (LED ${ledIndex}). LED should be blinking.`);
+        // Show DONE popup
+        const modal = document.createElement('div')
+        modal.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:20000; display:flex; align-items:center; justify-content:center;"
+        modal.innerHTML = `
+            <div style="background:white; padding:30px; border-radius:12px; width:320px; text-align:center; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+                <div style="font-size:2rem;">💡</div>
+                <h3 style="color:var(--main-blue); margin:10px 0;">LED Activated!</h3>
+                <p style="color:#555;">Rack <strong>${rackCode}</strong> is now lit up.</p>
+                <p style="color:#555;">Go to the rack and collect the component.</p>
+                <button id="esp-done-btn" style="margin-top:15px; width:100%; padding:10px; background:#28a745; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:1rem;">
+                    ✅ DONE
+                </button>
+            </div>
+        `
+        document.body.appendChild(modal)
+
+        document.getElementById('esp-done-btn').onclick = async () => {
+            await supabase
+                .from('drawers')
+                .update({ dispatch_active: false })
+                .eq('label', rackCode)
+            modal.remove()
+        }
 
     } catch (err) {
-        console.error("Hardware pipeline update execution failed:", err.message)
+        alert('Failed to send signal: ' + err.message)
     }
 }
-
 
 // ============================================================
 //  DISPENSE PAGE — Finalize packing, generate bag code
@@ -1442,7 +1477,24 @@ export async function finalizePacking(id) {
             bag_code:      bagCode,
             dispensed_at:  new Date()
         }).eq('id', id)
+        // Reset all LEDs for this proposal
+        const { data: propItems } = await supabase
+            .from('proposals')
+            .select('proposal_items(components(drawers(label)))')
+            .eq('id', id)
+            .single()
 
+        const labels = (propItems?.proposal_items || [])
+            .map(i => i.components?.drawers?.label)
+            .filter(Boolean)
+
+        if (labels.length > 0) {
+            await supabase
+                .from('drawers')
+                .update({ dispatch_active: false })
+                .in('label', labels)
+        }
+        
         alert(`Success! Bag Generated: ${bagCode}`)
     }
 
