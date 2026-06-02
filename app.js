@@ -272,6 +272,54 @@ export async function renderGlobalNavigation() {
 
     const role = localStorage.getItem('userRole') || 'student'
 
+    // Fetch user profile for display
+    const { data: { user } } = await supabase.auth.getUser()
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role, supervisor_code, matric_number')
+        .eq('id', user?.id)
+        .single()
+
+    const initials = (profile?.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+
+    if (topNav) {
+        topNav.innerHTML = `
+            <div style="position:relative; display:inline-block;">
+                <button onclick="toggleProfileDropdown()" 
+                    style="width:38px; height:38px; border-radius:50%; background:var(--main-blue); color:white; border:none; cursor:pointer; font-weight:700; font-size:0.95rem; display:flex; align-items:center; justify-content:center;">
+                    ${initials}
+                </button>
+                <div id="profile-dropdown" style="display:none; position:absolute; right:0; top:48px; background:white; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:260px; z-index:9999; padding:0; overflow:hidden;">
+                    <div style="background:var(--main-blue); padding:16px 20px; color:white;">
+                        <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.2rem; margin-bottom:10px;">
+                            ${initials}
+                        </div>
+                        <div style="font-weight:700; font-size:1rem;">${profile?.full_name || '—'}</div>
+                        <div style="font-size:0.8rem; opacity:0.85; margin-top:2px;">${user?.email || '—'}</div>
+                    </div>
+                    <div style="padding:16px 20px;">
+                        <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
+                            <span style="color:#999;">Role:</span> <strong style="text-transform:capitalize;">${profile?.role || role}</strong>
+                        </div>
+                        ${role === 'student' ? `
+                        <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
+                            <span style="color:#999;">Matric No:</span> <strong>${profile?.matric_number || '—'}</strong>
+                        </div>` : ''}
+                        ${role === 'supervisor' || role === 'student' ? `
+                        <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
+                            <span style="color:#999;">Supervisor Code:</span> <strong>${profile?.supervisor_code || '—'}</strong>
+                        </div>` : ''}
+                    </div>
+                    <div style="border-top:1px solid #eee; padding:12px 20px;">
+                        <button onclick="logout()" style="width:100%; padding:8px; background:#dc3545; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; font-size:0.9rem;">
+                            Log Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `
+    }
+
     // Fetch categories from Supabase for the sidebar dropdown
     const { data: categories } = await supabase
         .from('categories')
@@ -331,6 +379,24 @@ export function toggleSidebar() {
     if (content) content.classList.toggle('shifted')
 }
 
+// ============================================================
+//  Profile — Display profile
+// ============================================================
+export function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profile-dropdown')
+    if (!dropdown) return
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none'
+
+    // Close when clicking outside
+    setTimeout(() => {
+        document.addEventListener('click', function closeDropdown(e) {
+            if (!e.target.closest('#profile-dropdown') && !e.target.closest('button[onclick="toggleProfileDropdown()"]')) {
+                dropdown.style.display = 'none'
+                document.removeEventListener('click', closeDropdown)
+            }
+        })
+    }, 100)
+}
 
 // ============================================================
 //  CATALOG — Render component grid
@@ -1861,6 +1927,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.toggleSidebar             = toggleSidebar
     window.toggleStoreGlobal         = toggleStoreGlobal
     window.logout                    = logout
+    window.toggleProfileDropdown     = toggleProfileDropdown
     window.filterCatalog             = filterCatalog
     window.filterSidebarCategories   = filterSidebarCategories
     window.addItemToList             = addItemToList
