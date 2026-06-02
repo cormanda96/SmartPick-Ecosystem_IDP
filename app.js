@@ -633,7 +633,7 @@ export async function addNewComponent() {
                 row_number: rowNum,
                 'drawer number': drawerNum,
                 color_code: colorCode,
-                led_index: ledRaw ? `{${ledRaw}}` : null,
+                led_index: ledRaw ? ledRaw.split(',').map(s => s.trim()) : null,
                 dispatch_active: false
             })
             .select()
@@ -780,7 +780,7 @@ export async function editComponent(id, name, qty, rowNum, label, colorCode, led
                     row_number: newRow,
                     label: newLabel,
                     color_code: newColor,
-                    led_index: newLed
+                    led_index: newLed ? newLed.split(',').map(s => s.trim()) : null
                 })
                 .eq('label', label)
 
