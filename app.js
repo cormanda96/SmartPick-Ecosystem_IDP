@@ -498,9 +498,24 @@ export async function assignDrawer(componentId, drawerLabel) {
 // ============================================================
 export async function deleteComponent(id) {
     if (!confirm('Are you sure you want to delete this component?')) return
+
+    // Get drawer_id first before deleting component
+    const { data: comp } = await supabase
+        .from('components')
+        .select('drawer_id')
+        .eq('id', id)
+        .single()
+
+    // Delete component first
     const { error } = await supabase.from('components').delete().eq('id', id)
-    if (error) alert('Delete failed: ' + error.message)
-    else renderCatalog()
+    if (error) { alert('Delete failed: ' + error.message); return }
+
+    // Then delete the linked drawer
+    if (comp?.drawer_id) {
+        await supabase.from('drawers').delete().eq('id', comp.drawer_id)
+    }
+
+    renderCatalog()
 }
 
 
