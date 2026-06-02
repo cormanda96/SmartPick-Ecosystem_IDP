@@ -565,7 +565,11 @@ export async function addNewComponent() {
             <input type="text" id="new-comp-label" placeholder="e.g. D1" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
 
             <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Color Code:</label>
-            <input type="text" id="new-comp-color" placeholder="e.g. green, red, blue" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+            <select id="new-comp-color" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+                <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+            </select>
 
             <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">LED Index (e.g. 1,2):</label>
             <input type="text" id="new-comp-led" placeholder="e.g. 1,2" style="width:100%; padding:8px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
@@ -739,7 +743,11 @@ export async function editComponent(id, name, qty, rowNum, label, colorCode, led
             <input type="text" id="edit-label" value="${label}" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
 
             <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">Color Code:</label>
-            <input type="text" id="edit-color" value="${colorCode}" placeholder="e.g. green, red, blue" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+            <select id="edit-color" style="width:100%; padding:8px; margin-bottom:15px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+                <option value="red" ${colorCode === 'red' ? 'selected' : ''}>Red</option>
+                <option value="green" ${colorCode === 'green' ? 'selected' : ''}>Green</option>
+                <option value="blue" ${colorCode === 'blue' ? 'selected' : ''}>Blue</option>
+            </select>
 
             <label style="display:block; font-weight:600; margin-bottom:5px; font-size:0.9rem;">LED Index (e.g. 1,2):</label>
             <input type="text" id="edit-led" value="${ledIndex}" placeholder="e.g. 1,2" style="width:100%; padding:8px; margin-bottom:20px; border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
