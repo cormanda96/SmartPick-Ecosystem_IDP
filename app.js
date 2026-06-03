@@ -22,10 +22,10 @@ export async function handleLogin(email, password) {
         return
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('full_name, role, matric_number, supervisor_id, staff_code')
-        .eq('id', user?.id)
+        .eq('id', data.user.id)
         .single()
 
     if (profileError || !profile) {
