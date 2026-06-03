@@ -412,7 +412,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawer_id, drawers(id, label, row_number, "drawer number", dispatch_active, color_code, led_index)')
+        .select('id, name, qty, categories(name), drawers(id, label, row_number, "drawer number", color_code, led_index, dispatch_active)')
         .order('name')
 
     if (urlFilter) {
@@ -425,7 +425,6 @@ export async function renderCatalog() {
     }
 
     const { data: items, error } = await query
-    console.log('sample item:', items?.[0])
 
     if (error) {
         grid.innerHTML = `<p style="color:red;">Failed to load catalog: ${error.message}</p>`
@@ -483,7 +482,7 @@ export async function renderCatalog() {
                         style="flex:1; padding:8px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
                         Find Now
                     </button>
-                    <button onclick="editComponent(${item.id}, '${item.name}', ${item.qty}, '${drawer?.row_number ?? ''}', '${drawer?.label ?? ''}', '${drawer?.color_code ?? ''}', '${drawer?.led_index ?? ''}')"
+                    <button onclick="editComponent(${item.id}, '${item.name}', ${item.qty}, '${drawer?.row_number ?? ''}', '${drawer?.label ?? ''}', '${drawer?.color_code ?? ''}', '${drawer?.led_index ? drawer.led_index.join(',') : ''}')"
                         style="flex:1; padding:8px; background:#f0a500; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
                         Edit
                     </button>
