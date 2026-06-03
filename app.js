@@ -412,7 +412,7 @@ export async function renderCatalog() {
 
     let query = supabase
         .from('components')
-        .select('id, name, qty, categories(name), drawers(label, row_number, "drawer number", dispatch_active, color_code, led_index)')
+        .select('id, name, qty, categories(name), drawer_id, drawers(id, label, row_number, "drawer number", dispatch_active, color_code, led_index)')
         .order('name')
 
     if (urlFilter) {
@@ -425,6 +425,7 @@ export async function renderCatalog() {
     }
 
     const { data: items, error } = await query
+    console.log('sample item:', items?.[0])
 
     if (error) {
         grid.innerHTML = `<p style="color:red;">Failed to load catalog: ${error.message}</p>`
