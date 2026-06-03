@@ -22,13 +22,10 @@ export async function handleLogin(email, password) {
         return
     }
 
-    // Always fetch the role from the profiles table using the active session.
-    // This is the most reliable source — user_metadata can be stale if the
-    // account was registered before the role-saving fix was applied.
-    const { data: profile, error: profileError } = await supabase
+    const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
+        .select('full_name, role, matric_number, supervisor_id, staff_code')
+        .eq('id', user?.id)
         .single()
 
     if (profileError || !profile) {
@@ -261,7 +258,6 @@ export async function renderGlobalNavigation() {
     // Public pages (no sidebar): show Home, Login, Register
     if (!sidebarNav && topNav) {
         topNav.innerHTML = `
-            <a href="index.html"    style="color:white; text-decoration:none; margin-left:20px;">Home</a>
             <a href="login.html"    style="color:white; text-decoration:none; margin-left:20px;">Log In</a>
             <a href="register.html" style="color:white; text-decoration:none; margin-left:20px;">Register</a>
         `
@@ -280,19 +276,19 @@ export async function renderGlobalNavigation() {
         .eq('id', user?.id)
         .single()
 
-    const initials = (profile?.full_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+    const userIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="22" height="22"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>`
 
     if (topNav) {
         topNav.innerHTML = `
             <div style="position:relative; display:inline-block;">
                 <button onclick="toggleProfileDropdown()" 
-                    style="width:38px; height:38px; border-radius:50%; background:var(--main-blue); color:white; border:none; cursor:pointer; font-weight:700; font-size:0.95rem; display:flex; align-items:center; justify-content:center;">
-                    ${initials}
+                    style="width:38px; height:38px; border-radius:50%; background:var(--main-blue); color:white; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                    ${userIcon}
                 </button>
                 <div id="profile-dropdown" style="display:none; position:absolute; right:0; top:48px; background:white; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); min-width:260px; z-index:9999; padding:0; overflow:hidden;">
                     <div style="background:var(--main-blue); padding:16px 20px; color:white;">
-                        <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.2rem; margin-bottom:10px;">
-                            ${initials}
+                        <div style="width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.3); display:flex; align-items:center; justify-content:center; margin-bottom:10px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="30" height="30"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
                         </div>
                         <div style="font-weight:700; font-size:1rem;">${profile?.full_name || '—'}</div>
                         <div style="font-size:0.8rem; opacity:0.85; margin-top:2px;">${user?.email || '—'}</div>
@@ -305,9 +301,13 @@ export async function renderGlobalNavigation() {
                         <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
                             <span style="color:#999;">Matric No:</span> <strong>${profile?.matric_number || '—'}</strong>
                         </div>` : ''}
-                        ${role === 'supervisor' || role === 'student' ? `
+                        ${role === 'student' ? `
                         <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
-                            <span style="color:#999;">Supervisor Code:</span> <strong>${profile?.supervisor_code || '—'}</strong>
+                            <span style="color:#999;">Supervisor ID:</span> <strong>${profile?.supervisor_id || '—'}</strong>
+                        </div>` : ''}
+                        ${role === 'supervisor' || role === 'manager' ? `
+                        <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
+                            <span style="color:#999;">Staff Code:</span> <strong>${profile?.staff_code || '—'}</strong>
                         </div>` : ''}
                     </div>
                     <div style="border-top:1px solid #eee; padding:12px 20px;">
