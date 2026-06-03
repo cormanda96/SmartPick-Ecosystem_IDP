@@ -272,7 +272,7 @@ export async function renderGlobalNavigation() {
     const { data: { user } } = await supabase.auth.getUser()
     const { data: profile } = await supabase
         .from('profiles')
-        .select('full_name, role, supervisor_code, matric_number')
+        .select('full_name, role, matric_number, supervisor_id, staff_code')
         .eq('id', user?.id)
         .single()
 
