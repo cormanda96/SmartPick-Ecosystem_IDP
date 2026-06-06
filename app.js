@@ -303,7 +303,7 @@ export async function renderGlobalNavigation() {
                         </div>` : ''}
                         ${role === 'student' ? `
                         <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
-                            <span style="color:#999;">Supervisor ID:</span> <strong>${profile?.supervisor_id || '—'}</strong>
+                            <span style="color:#999;">Supervisor ID:</span> <strong>${profile?.supervisor_full_name || '—'}</strong>
                         </div>` : ''}
                         ${role === 'supervisor' || role === 'manager' ? `
                         <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
