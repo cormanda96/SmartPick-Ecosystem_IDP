@@ -276,6 +276,16 @@ export async function renderGlobalNavigation() {
         .eq('id', user?.id)
         .single()
 
+    let supervisorName = '—'
+    if (profile?.supervisor_id) {
+    const { data: supervisorProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', profile.supervisor_id)
+            .single()
+        supervisorName = supervisorProfile?.full_name || '—'
+    }
+
     const userIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="22" height="22"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>`
 
     if (topNav) {
@@ -303,7 +313,7 @@ export async function renderGlobalNavigation() {
                         </div>` : ''}
                         ${role === 'student' ? `
                         <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
-                            <span style="color:#999;">Supervisor name:</span> <strong>${profile?.full_name || '—'}</strong>
+                            <span style="color:#999;">Supervisor name:</span> <strong>${supervisorName}</strong>
                         </div>` : ''}
                         ${role === 'supervisor' || role === 'manager' ? `
                         <div style="font-size:0.85rem; color:#555; margin-bottom:8px;">
