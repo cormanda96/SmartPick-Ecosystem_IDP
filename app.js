@@ -504,14 +504,6 @@ export async function renderCatalog() {
                 <h3>${item.name}</h3>
                 <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
                 <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">Stock: ${item.qty}</span>
-                <div style="margin-top:8px; font-size:0.85rem; color:#444;">
-                    <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
-                    <span>Drawer: <strong>${drawerNum}</strong></span>
-                </div>
-                <button onclick="findNow(${item.id}, '${drawer?.label || ''}')"
-                    style="margin-top:10px; width:100%; padding:8px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600;">
-                    Find Now
-                </button>
             `
         }
         grid.appendChild(card)
