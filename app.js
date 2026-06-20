@@ -497,13 +497,16 @@ export async function renderCatalog() {
         const drawerNum = drawer?.['drawer number'] ?? 'N/A'
 
         if (isUpdateMode) {
+            const ledDisplay = drawer?.led_index ? drawer.led_index.join(', ') : 'N/A'
+
             card.innerHTML = `
                 <h3>${item.name}</h3>
                 <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
                 <span class="stock-tag" style="color:${item.qty > 0 ? 'green' : 'red'}">Stock: ${item.qty}</span>
                 <div style="margin-top:8px; font-size:0.85rem; color:#444;">
                     <span>Row: <strong>${row}</strong></span> &nbsp;|&nbsp;
-                    <span>Drawer: <strong>${drawerNum}</strong></span>
+                    <span>Drawer: <strong>${drawerNum}</strong></span> &nbsp;|&nbsp;
+                    <span>LED Index: <strong>${ledDisplay}</strong></span>
                 </div>
                 <div style="margin-top:10px; display:flex; gap:8px;">
                     <button onclick="findNow(${item.id}, '${drawer?.label || ''}')"
