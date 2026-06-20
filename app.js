@@ -749,19 +749,28 @@ export async function addNewComponent() {
 
 
 // ============================================================
-//  CATALOG — Filter (search box + category dropdown)
+//  CATALOG — Filter (Preserves View Mode)
 // ============================================================
 export function filterCatalog() {
     const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
     const selectedCat = document.getElementById('categorySelect').value || 'all'
 
+    const urlParams = new URLSearchParams(window.location.search)
+
+    // Keep the current view mode state intact (e.g. mode=update)
+    const currentMode = urlParams.get('mode')
+    urlParams.clear()
+    if (currentMode) urlParams.set('mode', currentMode)
+
     if (selectedCat && selectedCat !== 'all') {
-        window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
-    } else {
-        window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
+        urlParams.set('filter', selectedCat)
+    }
+    if (searchTerm) {
+        urlParams.set('search', searchTerm)
     }
 
-renderCatalog()
+    window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`)
+    renderCatalog()
 }
 
 // ============================================================
