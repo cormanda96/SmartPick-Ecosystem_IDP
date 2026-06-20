@@ -1829,26 +1829,29 @@ export async function renderEnhancedHistory() {
 
         const totalDataSum = totalDispensedCount + mockAddedValue;
 
-        if (totalDataSum > 0 && targetCanvas) {
-            activeMovementChart = new Chart(targetCanvas, {
-                type: 'pie',
-                data: {
-                    labels: ['Total Dispensed', 'New Stock Added'],
-                    datasets: [{
-                        data: [totalDispensedCount, isolatedAddedCount],
-                        backgroundColor: ['#0077B6', '#28a745'], 
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
+        if (targetCanvas) {
+            // FIX: Use setTimeout to allow the browser to calculate canvas dimensions before drawing
+            setTimeout(() => {
+                activeMovementChart = new Chart(targetCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Total Dispensed', 'New Stock Added'],
+                        datasets: [{
+                            data: [totalDispensedCount, isolatedAddedCount],
+                            backgroundColor: ['#0077B6', '#28a745'], 
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
                     }
-                }
-            });
+                });
+            }, 0);
         }
     }
 
