@@ -1820,8 +1820,6 @@ export async function renderEnhancedHistory() {
             }   
         }
 
-        // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
-        // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
         const wrapper = document.getElementById('chart-wrapper');
         if (!wrapper) return;
 
@@ -1832,15 +1830,18 @@ export async function renderEnhancedHistory() {
 
         // Re-inject a clean canvas element before rendering
         wrapper.innerHTML = '<canvas id="movementChart"></canvas>';
-        const targetCanvas = document.getElementById('movementChart');
 
         // Calculate combined sum using valid defined variables
         const totalMovement = totalDispensedCount + isolatedAddedCount;
 
-        if (totalMovement > 0 && targetCanvas) {
-            // Use setTimeout to allow the browser to calculate canvas dimensions before drawing
+        if (totalMovement > 0) {
+            // FIX: Use a safe 100ms window to guarantee the browser completes layout calculations
             setTimeout(() => {
-                activeMovementChart = new Chart(targetCanvas, {
+                // FIX: Grab a fresh live reference of the canvas node straight from the DOM
+                const freshCanvas = document.getElementById('movementChart');
+                if (!freshCanvas) return;
+
+                activeMovementChart = new Chart(freshCanvas, {
                     type: 'pie',
                     data: {
                         labels: ['Total Dispensed', 'New Stock Added'],
@@ -1859,8 +1860,8 @@ export async function renderEnhancedHistory() {
                         }
                     }
                 });
-            }, 0);
-        } else if (targetCanvas) {
+            }, 100); // 100ms provides stable layout rendering across all browsers
+        } else {
             wrapper.innerHTML = '<p style="color:#999; font-size:0.9rem; text-align:center; margin-top:120px;">No movement metrics available.</p>';
         }
     }
