@@ -1821,6 +1821,7 @@ export async function renderEnhancedHistory() {
         }
 
         // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
+        // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
         const wrapper = document.getElementById('chart-wrapper');
         if (!wrapper) return;
 
@@ -1833,26 +1834,34 @@ export async function renderEnhancedHistory() {
         wrapper.innerHTML = '<canvas id="movementChart"></canvas>';
         const targetCanvas = document.getElementById('movementChart');
 
-        if (totalDataSum > 0 && targetCanvas) {
-            activeMovementChart = new Chart(targetCanvas, {
-                type: 'pie',
-                data: {
-                    labels: ['Total Dispensed', 'New Stock Added'],
-                    datasets: [{
-                        data: [totalDispensedCount, isolatedAddedCount],
-                        backgroundColor: ['#0077B6', '#28a745'], 
-                        borderWidth: 2,
-                        borderColor: '#ffffff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
+        // Calculate combined sum using valid defined variables
+        const totalMovement = totalDispensedCount + isolatedAddedCount;
+
+        if (totalMovement > 0 && targetCanvas) {
+            // Use setTimeout to allow the browser to calculate canvas dimensions before drawing
+            setTimeout(() => {
+                activeMovementChart = new Chart(targetCanvas, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Total Dispensed', 'New Stock Added'],
+                        datasets: [{
+                            data: [totalDispensedCount, isolatedAddedCount],
+                            backgroundColor: ['#0077B6', '#28a745'], 
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom' }
+                        }
                     }
-                }
-            });
+                });
+            }, 0);
+        } else if (targetCanvas) {
+            wrapper.innerHTML = '<p style="color:#999; font-size:0.9rem; text-align:center; margin-top:120px;">No movement metrics available.</p>';
         }
     }
 
