@@ -448,6 +448,7 @@ export async function renderCatalog() {
 
     // Build controls
     const controls = document.getElementById('catalog-controls')
+
     if (controls && !document.getElementById('catalogSearch')) {
         const { data: cats } = await supabase.from('categories').select('name').order('name')
         let catOptions = '<option value="all">All Categories</option>'
@@ -752,25 +753,33 @@ export async function addNewComponent() {
 //  CATALOG — Filter (search box + category dropdown)
 // ============================================================
 export function filterCatalog() {
-    const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
-    const selectedCat = document.getElementById('categorySelect').value || 'all'
+    const searchInput = document.getElementById('catalogSearch');
+    const categorySelect = document.getElementById('categorySelect');
 
-    const urlParams = new URLSearchParams(window.location.search)
+    if (!searchInput || !categorySelect) return;
 
-    // Keep the current view mode state intact (e.g. mode=update)
-    const currentMode = urlParams.get('mode')
-    urlParams.clear()
-    if (currentMode) urlParams.set('mode', currentMode)
+    const searchTerm  = searchInput.value.toLowerCase();
+    const selectedCat = categorySelect.value || 'all';
 
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const currentMode = urlParams.get('mode');
+    
+    urlParams.clear();
+
+    if (currentMode) {
+        urlParams.set('mode', currentMode);
+    }
     if (selectedCat && selectedCat !== 'all') {
-        urlParams.set('filter', selectedCat)
+        urlParams.set('filter', selectedCat);
     }
     if (searchTerm) {
-        urlParams.set('search', searchTerm)
+        urlParams.set('search', searchTerm);
     }
 
-    window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`)
-    renderCatalog()
+    window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`);
+    
+    renderCatalog();
 }
 
 // ============================================================
