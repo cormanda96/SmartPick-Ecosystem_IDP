@@ -357,8 +357,10 @@ export async function renderGlobalNavigation() {
     
     // Render category tab buttons inside catalog page
     const catNav = document.getElementById('catalog-category-nav')
-    if (catNav && cats) {
-        catNav.innerHTML = `<button onclick="filterCatalog()" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${!urlFilter ? 'var(--main-blue)' : 'white'}; color:${!urlFilter ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">All</button>`
+    if (catNav && categories) {
+        const navParams = new URLSearchParams(window.location.search)
+        const currentUrlFilter = navParams.get('filter')
+       catNav.innerHTML = `<button onclick="filterCatalog()" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${!currentUrlFilter ? 'var(--main-blue)' : 'white'}; color:${!currentUrlFilter ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">All</button>`
         cats.forEach(c => {
             const isActive = urlFilter === c.name
             catNav.innerHTML += `<button onclick="window.location.href='catalog.html?filter=${encodeURIComponent(c.name)}'" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${isActive ? 'var(--main-blue)' : 'white'}; color:${isActive ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">${c.name}</button>`
