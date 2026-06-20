@@ -191,7 +191,10 @@ export async function getCurrentUser() {
 export async function initializeGlobalBanner() {
     const banner     = document.getElementById('status-banner')
     const statusText = document.getElementById('status-text')
-    if (!banner || !statusText) return
+    const label = document.getElementById('current-status-label')
+    const btn   = document.getElementById('toggle-btn')
+
+    if (!banner && !statusText && !label && !btn) return
 
     const { data, error } = await supabase
         .from('store_settings')
@@ -210,6 +213,20 @@ export async function initializeGlobalBanner() {
     } else {
         banner.style.backgroundColor = 'var(--closed-red)'
         statusText.innerText = 'CLOSED'
+    }
+    if (banner && statusText) {
+        if (data.is_open) {
+            banner.style.backgroundColor = 'var(--open-green)'
+            statusText.innerText = 'OPEN'
+        } else {
+            banner.style.backgroundColor = 'var(--closed-red)'
+            statusText.innerText = 'CLOSED'
+        }
+    }
+    if (label && btn) {
+        label.innerText = `Store is currently ${data.is_open ? 'OPEN' : 'CLOSED'}`
+        btn.innerText   = data.is_open ? 'CLOSE STORE' : 'OPEN STORE'
+        btn.style.backgroundColor = data.is_open ? 'var(--closed-red)' : 'var(--open-green)'
     }
 }
 
