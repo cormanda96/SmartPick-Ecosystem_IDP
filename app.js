@@ -448,7 +448,7 @@ export async function renderCatalog() {
 
     // Build controls
     const controls = document.getElementById('catalog-controls')
-    if (controls) {
+    if (controls && !document.getElementById('catalogSearch')) {
         const { data: cats } = await supabase.from('categories').select('name').order('name')
         let catOptions = '<option value="all">All Categories</option>'
         ;(cats || []).forEach(c => {
