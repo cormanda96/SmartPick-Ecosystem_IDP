@@ -749,27 +749,27 @@ export async function addNewComponent() {
 
 
 // ============================================================
-//  CATALOG — Filter (Preserves View Mode)
+//  CATALOG — Filter (search box + category dropdown)
 // ============================================================
 export function filterCatalog() {
     const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
     const selectedCat = document.getElementById('categorySelect').value || 'all'
 
+    // 1. Grab the current URL search params to see if a mode exists
     const urlParams = new URLSearchParams(window.location.search)
-
-    // Keep the current view mode state intact (e.g. mode=update)
     const currentMode = urlParams.get('mode')
-    urlParams.clear()
-    if (currentMode) urlParams.set('mode', currentMode)
+    
+    // 2. Build a prefix string to dynamically inject the mode back if it's there
+    const modePrefix = currentMode ? `mode=${currentMode}&` : ''
 
+    // 3. Push the state smoothly while maintaining the active view mode layer
     if (selectedCat && selectedCat !== 'all') {
-        urlParams.set('filter', selectedCat)
-    }
-    if (searchTerm) {
-        urlParams.set('search', searchTerm)
+        window.history.pushState({}, '', `catalog.html?${modePrefix}filter=${encodeURIComponent(selectedCat)}&search=${encodeURIComponent(searchTerm)}`)
+    } else {
+        window.history.pushState({}, '', `catalog.html?${modePrefix}search=${encodeURIComponent(searchTerm)}`)
     }
 
-    window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`)
+    // 4. Re-run the interface rendering engine
     renderCatalog()
 }
 
