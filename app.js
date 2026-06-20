@@ -357,10 +357,8 @@ export async function renderGlobalNavigation() {
     
     // Render category tab buttons inside catalog page
     const catNav = document.getElementById('catalog-category-nav')
-    if (catNav && categories) {
-        const navParams = new URLSearchParams(window.location.search)
-        const currentUrlFilter = navParams.get('filter')
-       catNav.innerHTML = `<button onclick="filterCatalog()" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${!currentUrlFilter ? 'var(--main-blue)' : 'white'}; color:${!currentUrlFilter ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">All</button>`
+    if (catNav && cats) {
+        catNav.innerHTML = `<button onclick="filterCatalog()" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${!urlFilter ? 'var(--main-blue)' : 'white'}; color:${!urlFilter ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">All</button>`
         cats.forEach(c => {
             const isActive = urlFilter === c.name
             catNav.innerHTML += `<button onclick="window.location.href='catalog.html?filter=${encodeURIComponent(c.name)}'" style="padding:6px 14px; border-radius:20px; border:1px solid var(--main-blue); background:${isActive ? 'var(--main-blue)' : 'white'}; color:${isActive ? 'white' : 'var(--main-blue)'}; cursor:pointer; font-size:0.85rem;">${c.name}</button>`
@@ -413,17 +411,14 @@ export function toggleProfileDropdown() {
 // ============================================================
 //  CATALOG — Render component grid
 // ============================================================
-export async function renderCatalog(forcedFilter = null, forcedSearch = null) {
+export async function renderCatalog() {
     const grid = document.getElementById('catalog-grid')
     if (!grid) return
 
     const role      = localStorage.getItem('userRole') || 'student'
     const urlParams = new URLSearchParams(window.location.search)
-    
-    // FIX: Use explicitly passed parameters, or fallback to URL query strings on initial boot
-    const urlFilter = forcedFilter !== null ? forcedFilter : urlParams.get('filter')
-    const rawSearch = forcedSearch !== null ? forcedSearch : (urlParams.get('search') || '')
-    const searchTerm = rawSearch.toLowerCase()
+    const urlFilter = urlParams.get('filter')
+    const searchTerm = (urlParams.get('search') || '').toLowerCase()
     const isUpdateMode = (role === 'manager' && urlParams.get('mode') === 'update')
 
     let query = supabase
@@ -453,8 +448,7 @@ export async function renderCatalog(forcedFilter = null, forcedSearch = null) {
 
     // Build controls
     const controls = document.getElementById('catalog-controls')
-
-    if (controls && !document.getElementById('catalogSearch')) {
+    if (controls) {
         const { data: cats } = await supabase.from('categories').select('name').order('name')
         let catOptions = '<option value="all">All Categories</option>'
         ;(cats || []).forEach(c => {
@@ -758,34 +752,16 @@ export async function addNewComponent() {
 //  CATALOG — Filter (search box + category dropdown)
 // ============================================================
 export function filterCatalog() {
-    const searchInput = document.getElementById('catalogSearch');
-    const categorySelect = document.getElementById('categorySelect');
+    const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
+    const selectedCat = document.getElementById('categorySelect').value || 'all'
 
-    if (!searchInput || !categorySelect) return;
-
-    const searchTerm  = searchInput.value.toLowerCase();
-    const selectedCat = categorySelect.value || 'all';
-
-    const urlParams = new URLSearchParams(window.location.search);
-
-    const currentMode = urlParams.get('mode');
-    
-    urlParams.clear();
-
-    if (currentMode) {
-        urlParams.set('mode', currentMode);
-    }
     if (selectedCat && selectedCat !== 'all') {
-        urlParams.set('filter', selectedCat);
-    }
-    if (searchTerm) {
-        urlParams.set('search', searchTerm);
+        window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
+    } else {
+        window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
     }
 
-    window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`);
-    
-    const filterPass = selectedCat && selectedCat !== 'all' ? selectedCat : null;
-    renderCatalog(filterPass, searchTerm);
+renderCatalog()
 }
 
 // ============================================================
