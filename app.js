@@ -413,14 +413,17 @@ export function toggleProfileDropdown() {
 // ============================================================
 //  CATALOG — Render component grid
 // ============================================================
-export async function renderCatalog() {
+export async function renderCatalog(forcedFilter = null, forcedSearch = null) {
     const grid = document.getElementById('catalog-grid')
     if (!grid) return
 
     const role      = localStorage.getItem('userRole') || 'student'
     const urlParams = new URLSearchParams(window.location.search)
-    const urlFilter = urlParams.get('filter')
-    const searchTerm = (urlParams.get('search') || '').toLowerCase()
+    
+    // FIX: Use explicitly passed parameters, or fallback to URL query strings on initial boot
+    const urlFilter = forcedFilter !== null ? forcedFilter : urlParams.get('filter')
+    const rawSearch = forcedSearch !== null ? forcedSearch : (urlParams.get('search') || '')
+    const searchTerm = rawSearch.toLowerCase()
     const isUpdateMode = (role === 'manager' && urlParams.get('mode') === 'update')
 
     let query = supabase
@@ -781,7 +784,8 @@ export function filterCatalog() {
 
     window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`);
     
-    renderCatalog();
+    const filterPass = selectedCat && selectedCat !== 'all' ? selectedCat : null;
+    renderCatalog(filterPass, searchTerm);
 }
 
 // ============================================================
