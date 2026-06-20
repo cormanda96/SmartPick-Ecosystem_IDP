@@ -1787,7 +1787,7 @@ export async function renderEnhancedHistory() {
             })
 
             const addedEntries = Object.entries(addedMap)
-           if (totalDispensedCount === 0) {
+            if (addedEntries.length === 0) {
                 addedBreakdown.innerHTML = '<p style="color:#999; font-size:0.85rem;">No data for this month.</p>'
             } else {
                 addedBreakdown.innerHTML = `
@@ -1827,31 +1827,26 @@ export async function renderEnhancedHistory() {
         wrapper.innerHTML = '<canvas id="movementChart"></canvas>';
         const targetCanvas = document.getElementById('movementChart');
 
-        const totalDataSum = totalDispensedCount + mockAddedValue;
-
-        if (targetCanvas) {
-            // FIX: Use setTimeout to allow the browser to calculate canvas dimensions before drawing
-            setTimeout(() => {
-                activeMovementChart = new Chart(targetCanvas, {
-                    type: 'pie',
-                    data: {
-                        labels: ['Total Dispensed', 'New Stock Added'],
-                        datasets: [{
-                            data: [totalDispensedCount, isolatedAddedCount],
-                            backgroundColor: ['#0077B6', '#28a745'], 
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
+        if (totalDataSum > 0 && targetCanvas) {
+            activeMovementChart = new Chart(targetCanvas, {
+                type: 'pie',
+                data: {
+                    labels: ['Total Dispensed', 'New Stock Added'],
+                    datasets: [{
+                        data: [totalDispensedCount, isolatedAddedCount],
+                        backgroundColor: ['#0077B6', '#28a745'], 
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
                     }
-                });
-            }, 0);
+                }
+            });
         }
     }
 
