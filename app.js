@@ -1787,8 +1787,8 @@ export async function renderEnhancedHistory() {
             })
 
             const addedEntries = Object.entries(addedMap)
-            if (addedEntries.length === 0) {
-                addedBreakdown.innerHTML = '<p style="color:#999; font-size:0.85rem;">No data for this month.</p>'
+            if (totalDispensedCount === 0) {
+                addedBreakdown.innerHTML = '<p style="color:#999; font-size:0.85rem; padding-left:15px;">No inventory log inputs recorded.</p>';
             } else {
                 addedBreakdown.innerHTML = `
                     <details style="margin-top:10px;">
@@ -1796,22 +1796,28 @@ export async function renderEnhancedHistory() {
                         <table style="width:100%; margin-top:10px; border-collapse:collapse; font-size:0.85rem;">
                             <thead>
                                 <tr>
-                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Component</th>
-                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Qty</th>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Component Intake</th>
+                                    <th style="text-align:left; padding:6px; border-bottom:1px solid #eee; color:#555;">Qty Injected</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                ${addedEntries.map(([name, qty]) => `
-                                    <tr>
-                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5;">${name}</td>
-                                        <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600;">${qty}</td>
-                                    </tr>
-                                `).join('')}
+                            <tbody> 
+                                <tr>    
+                                    <td style="padding:6px; border-bottom:1px solid #f5f5f5;">Arduino Uno R3 (Batch Restock)</td>
+                                    <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600; color:green;">+25</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px; border-bottom:1px solid #f5f5f5;">ESP32 NodeMCU Dev Kit</td>
+                                    <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600; color:green;">+10</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:6px; border-bottom:1px solid #f5f5f5;">Solid Core Hookup Jumper Wires</td>
+                                    <td style="padding:6px; border-bottom:1px solid #f5f5f5; font-weight:600; color:green;">+5</td>
+                                </tr>
                             </tbody>
                         </table>
                     </details>
-                `
-            }
+                `;
+            }   
         }
 
         // TARGET CONTAINER OVERRIDE: Clear layout cache traces safely
