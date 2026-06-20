@@ -350,7 +350,7 @@ export async function renderGlobalNavigation() {
     } else if (role === 'supervisor') {
         sidebarNav.innerHTML += `<a href="review.html"  class="sidebar-link">Review Pending</a>`
     } else if (role === 'manager') {
-        sidebarNav.innerHTML += `<a href="catalog.html"  class="sidebar-link">Update Catalog</a>`
+        sidebarNav.innerHTML += `<a href="catalog.html?mode=update"  class="sidebar-link">Update Catalog</a>`
         sidebarNav.innerHTML += `<a href="dispense.html" class="sidebar-link">Component Request</a>`
         sidebarNav.innerHTML += `<a href="history.html"  class="sidebar-link">History</a>`
     }
@@ -419,6 +419,7 @@ export async function renderCatalog() {
     const urlParams = new URLSearchParams(window.location.search)
     const urlFilter = urlParams.get('filter')
     const searchTerm = (urlParams.get('search') || '').toLowerCase()
+    const isUpdateMode = (role === 'manager' && urlParams.get('mode') === 'update')
 
     let query = supabase
         .from('components')
@@ -461,7 +462,7 @@ export async function renderCatalog() {
                     style="padding:8px; border:1px solid #ddd; border-radius:6px;">
                 ${catOptions}
             </select>
-            ${role === 'manager' ? `<button onclick="addNewComponent()"
+            ${isUpdateMode ? `<button onclick="addNewComponent()"
                 style="padding:8px 16px; background:var(--main-blue); color:white; border:none; border-radius:6px; cursor:pointer; font-weight:600; white-space:nowrap;">
                 + New Component</button>` : ''}
         `
@@ -472,13 +473,13 @@ export async function renderCatalog() {
     filtered.forEach(item => {
         const card = document.createElement('div')
         card.className = 'component-card'
-        if (item.qty === 0 && role !== 'manager') card.classList.add('out-of-stock')
+        if (item.qty === 0 && !isUpdateMode) card.classList.add('out-of-stock')
 
         const drawer = item.drawers
         const row = drawer?.row_number ?? 'N/A'
         const drawerNum = drawer?.['drawer number'] ?? 'N/A'
 
-        if (role === 'manager') {
+        if (isUpdateMode) {
             card.innerHTML = `
                 <h3>${item.name}</h3>
                 <p style="color:#666; font-size:0.8rem;">${item.categories?.name || ''}</p>
@@ -754,13 +755,22 @@ export function filterCatalog() {
     const searchTerm  = document.getElementById('catalogSearch').value.toLowerCase()
     const selectedCat = document.getElementById('categorySelect').value || 'all'
 
+    const urlParams = new URLSearchParams(window.location.search)
+
+    // Keep the current view mode state intact (e.g. mode=update)
+    const currentMode = urlParams.get('mode')
+    urlParams.clear()
+    if (currentMode) urlParams.set('mode', currentMode)
+
     if (selectedCat && selectedCat !== 'all') {
-        window.history.pushState({}, '', `catalog.html?filter=${encodeURIComponent(selectedCat)}&search=${searchTerm}`)
-    } else {
-        window.history.pushState({}, '', `catalog.html?search=${searchTerm}`)
+        urlParams.set('filter', selectedCat)
+    }
+    if (searchTerm) {
+        urlParams.set('search', searchTerm)
     }
 
-renderCatalog()
+    window.history.pushState({}, '', `catalog.html?${urlParams.toString()}`)
+    renderCatalog()
 }
 
 // ============================================================
