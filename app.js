@@ -1721,7 +1721,7 @@ export async function renderEnhancedHistory() {
         // Update display numbers
         document.getElementById('total-dispensed-val').innerText = totalDispensedCount
 
-        const isolatedAddedCount = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 0.4) + 15 : 40;
+        const isolatedAddedCount = totalDispensedCount > 0 ? Math.floor(totalDispensedCount * 0.4) + 15 : 0;
         document.getElementById('total-added-val').innerText = isolatedAddedCount;
 
         // Build breakdown list
