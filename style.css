@@ -651,32 +651,23 @@ input {
     border-bottom: 1px solid #eee;
 }
 /* ============================================================
-   PREMIUM CROSS-PLATFORM SYSTEM INTERFACE BREAKPOINTS
+   PREMIUM CROSS-PLATFORM INTERFACE OPTIMIZATION (CLEANED)
    ============================================================ */
 
 @media screen and (max-width: 768px) {
-    /* 1. Global Viewport Safety Anchors */
-    body {
-        overflow-x: hidden !important; /* Prevents horizontal screen scrolling/wobbling */
-    }
-
+    /* 1. Main Container & Spacing Resets */
     .catalog-container, .main-content {
         padding: 16px !important;
         margin-top: 10px !important;
-        box-sizing: border-box !important;
-        width: 100% !important;
     }
 
-    /* 2. Top Header & User Account Row Integrity */
+    /* 2. Header and Profile Protection (Sustains inline row tracking) */
     .main-header {
-        padding: 12px 16px !important;
+        padding: 12px 20px !important;
         display: flex !important;
         flex-direction: row !important;
         justify-content: space-between !important;
         align-items: center !important;
-        position: sticky !important;
-        top: 0 !important;
-        z-index: 1000 !important;
     }
 
     .main-header > div {
@@ -686,55 +677,45 @@ input {
         gap: 12px !important;
     }
 
+    /* Fixes profile dropdown overflow cutoffs */
     #profile-dropdown {
-        right: 16px !important;
+        right: 10px !important;
         left: auto !important;
         position: absolute !important;
-        top: 50px !important;
         width: 260px !important;
-        box-shadow: 0 8px 30px rgba(0,0,0,0.15) !important;
     }
 
-    /* 3. Absolute Overlay Sidebar Drawer (Fixes Stuck/Shifted Errors) */
+    /* 3. Stabilize Sidebar Overlay (Keeps hamburger menu button clickable) */
     .side-panel {
-        width: 260px !important;
+        width: 240px !important;
         position: fixed !important;
         top: 0 !important;
-        left: -280px !important; /* Fully hidden behind screen edge */
-        height: 100vh !important;
-        z-index: 1100 !important; /* Floats above header */
-        box-shadow: 4px 0 25px rgba(0, 0, 0, 0.12) !important;
-        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        padding-top: 80px !important;
+        left: -260px !important;
+        z-index: 999 !important; /* Set below main-header (1000) so menu stays accessible */
+        box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15) !important;
+        transition: left 0.3s ease !important;
     }
     
     .side-panel.open {
         left: 0 !important;
     }
 
-    /* Stops main content from shifting off-screen horizontally when menu opens */
     .main-content.shifted {
         margin-left: 0 !important;
-        transform: none !important;
     }
 
-    /* 4. Supervisor Review & Multi-Column Vertical Card Stacking */
-    /* Targets split-panels (like student list on left, details on right) to stack top-to-bottom */
+    /* 4. Targeted Split Layout Stacking (Applies only to core main page views) */
     .main-content > div[style*="display: flex"],
     .main-content > div[style*="display:flex"],
     .dashboard-details {
         flex-direction: column !important;
         align-items: stretch !important;
-        gap: 16px !important;
+        gap: 20px !important;
     }
 
-    /* Makes split-width cards expand to 100% of the mobile viewport */
+    /* Normalizes split width partitions into stacked cards */
     .main-content > div[style*="display: flex"] > div,
-    .main-content > div[style*="display:flex"] > div,
-    #master-student-list,
-    .history-card,
-    div[style*="min-width"],
-    div[style*="flex:"] {
+    .main-content > div[style*="display:flex"] > div {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
@@ -742,66 +723,68 @@ input {
         box-sizing: border-box !important;
     }
 
-    /* 5. Internal Card Layout Overrides (For Right Side Review Details Panel) */
-    /* Forces the Circuit Diagram card and Requested Items list to stack vertically inside the card */
-    div[style*="display: flex"] > div[style*="display: flex"],
-    div[style*="display:flex"] > div[style*="display:flex"] {
+    /* ── ADDITION: Internal Card Layout Stacking for Supervisor Review Details ── */
+    /* Forces the Circuit Diagram card and Requested Items list to stack vertically on phone screens */
+    .main-content div[style*="display: flex"] div[style*="display: flex"],
+    .main-content div[style*="display:flex"] div[style*="display:flex"] {
         flex-direction: column !important;
+        align-items: stretch !important;
         gap: 15px !important;
     }
 
-    /* Styles individual student name blocks in queue list */
-    .student-item {
-        padding: 14px !important;
-        margin-bottom: 8px !important;
-        border-radius: 8px !important;
-        background: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
+    /* Ensures the nested inner container items extend to full mobile card bounds cleanly */
+    .main-content div[style*="display: flex"] div[style*="display: flex"] > div,
+    .main-content div[style*="display:flex"] div[style*="display:flex"] > div,
+    div[style*="border: 2px dashed"],
+    div[style*="dashed"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
     }
 
-    /* Automatically scales circuit schematics and dynamic graphic boxes safely */
+    /* 5. Circuit Diagram Image Normalization */
     #diagram-preview,
-    .upload-section img,
-    img[id="diagram-preview"],
-    div[style*="border: 2px dashed"] {
+    img[id="diagram-preview"] {
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
-        border-radius: 8px !important;
-        margin: 8px auto !important;
-        display: block !important;
+        border-radius: 8px;
+        margin: 10px auto !important; /* Centers layout graphic responsively */
+        display: block;
     }
 
-    /* Preserves confirmation choice buttons (Approve / Decline) side-by-side inside their row */
-    div[style*="margin-top:10px; display:flex; gap:8px;"],
-    div[style*="gap:10px"],
-    div[style*="gap: 8px"] {
-        flex-direction: row !important;
-        display: flex !important;
-        gap: 12px !important;
-    }
-
-    /* Fluid Form Input Fields */
-    textarea, select, input, #feedback-comment {
-        width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        border-radius: 6px !important;
-        padding: 10px !important;
-    }
-
-    /* 6. High-Density Audit Table Scroll Containment */
-    .history-card, div[style*="overflow"] {
-        overflow-x: auto !important;
-        -webkit-overflow-scrolling: touch;
-    }
-    .history-table {
-        min-width: 560px !important;
-    }
-
-    /* 7. Catalog & Dashboard Grid Automation */
+    /* 6. Grid Automation for Catalog & Dashboards */
     .catalog-grid, .dashboard-grid {
         grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)) !important;
         gap: 16px !important;
+    }
+
+    /* 7. Action Button Alignment Preservation */
+    div[style*="margin-top:10px; display:flex; gap:8px;"] {
+        flex-direction: row !important; /* Keeps confirmation buttons side-by-side */
+        gap: 10px !important;
+    }
+
+    div[style*="margin-top:10px; display:flex; gap:8px;"] button {
+        padding: 12px 10px !important; /* Expands click surface targets to be easy-to-tap */
+        font-size: 0.85rem !important;
+    }
+
+    /* 8. Table Scroll Containment */
+    .history-card {
+        padding: 15px !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .history-table {
+        min-width: 580px !important;
+    }
+
+    /* 9. Fluid Form Sizing & Feedback Textarea Optimization */
+    #catalogSearch, #categorySelect, input, select, textarea, #feedback-comment {
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
     }
 }
