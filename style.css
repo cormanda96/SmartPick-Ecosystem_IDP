@@ -778,4 +778,34 @@ input {
         min-width: 0 !important;
         box-sizing: border-box !important;
     }
+    /* ============================================================
+       REVIEW PAGE MOBILE OPTIMIZATION (THE 3-STEP FIX)
+       ============================================================ */
+
+    /* 1. Top-to-Bottom Stack for the main layout */
+    .review-layout {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+
+    /* 2. Full-Width Scaling (100%) & removing desktop width locks */
+    .pending-sidebar, 
+    .proposal-viewer {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important; /* Crucial: removes the 280px desktop lock */
+        flex: none !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 3. Internal Stacking (Circuit Diagram on top of Requested Items) */
+    .comparison-grid {
+        grid-template-columns: 1fr !important; /* Changes it from 2 columns to 1 column */
+        gap: 15px !important;
+    }
+
+    /* Ensure the action buttons remain nicely spaced */
+    .action-grid {
+        gap: 10px !important;
+    }
 }
