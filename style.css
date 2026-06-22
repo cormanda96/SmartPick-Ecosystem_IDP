@@ -650,3 +650,70 @@ input {
     padding: 12px;
     border-bottom: 1px solid #eee;
 }
+/* ============================================================
+   RESPONSIVE LAYOUT BREAKPOINTS (Mobile & Tablet Optimization)
+   ============================================================ */
+
+@media screen and (max-width: 768px) {
+    /* 1. Main Container Resets */
+    .catalog-container, .main-content {
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    /* 2. Grid Automation */
+    .catalog-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)) !important;
+        gap: 15px;
+    }
+
+    /* 3. Sidebar Overlay Configuration (Fixed to prevent double-shifting) */
+    .side-panel {
+        width: 280px;
+        position: fixed;
+        left: -290px; /* Fully conceals the wider panel border shadows */
+        z-index: 9999;
+        transition: left 0.3s ease; /* Uniform transition parameter matching positioning properties */
+    }
+    
+    .side-panel.open {
+        left: 0 !important; /* Leverages identical layout logic to prevent alignment collisions */
+        transform: none !important;
+    }
+
+    /* Prevents content layout displacement on mobile screens */
+    .main-content.shifted {
+        margin-left: 0 !important;
+    }
+
+    /* 4. Table Scroll Containment */
+    .history-card {
+        padding: 15px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .history-table {
+        min-width: 600px; /* Sustains tabular row integrity inside the scroll wrap box */
+    }
+
+    /* 5. Flex Alignment Compressors */
+    .catalog-header, .catalog-controls, .dashboard-details {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 10px;
+    }
+
+    #catalogSearch, #categorySelect, .stat-card {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    /* 6. FIX: Overrides inline JavaScript modal widths on small viewports */
+    body > div[style*="position:fixed"] > div {
+        width: 90% !important;
+        max-width: 420px !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+    }
+}
