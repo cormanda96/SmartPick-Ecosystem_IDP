@@ -704,7 +704,7 @@ input {
         margin-left: 0 !important;
     }
 
-    /* 4. Targeted Split Layout Stacking (Universal Tag Fix) */
+    /* 4. Targeted Split Layout Stacking (Bulletproof Selector Fix) */
     .main-content [style*="display: flex"],
     .main-content [style*="display:flex"],
     .dashboard-details {
@@ -713,7 +713,7 @@ input {
         gap: 20px !important;
     }
 
-    /* Normalizes ALL horizontal child panels (divs, sections, cards) into full-width stacked layouts */
+    /* Normalizes ALL child containers inside both space and space-less flex layouts */
     .main-content [style*="display: flex"] > *,
     .main-content [style*="display:flex"] > * {
         width: 100% !important;
