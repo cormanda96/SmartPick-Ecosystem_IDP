@@ -651,67 +651,109 @@ input {
     border-bottom: 1px solid #eee;
 }
 /* ============================================================
-   RESPONSIVE LAYOUT BREAKPOINTS (Mobile & Tablet Optimization)
+   RESPONSIVE LAYOUT BREAKPOINTS (Complete Mobile Optimization)
    ============================================================ */
 
 @media screen and (max-width: 768px) {
-    /* 1. Main Container Resets */
+    /* 1. Main Container & Spacing Resets */
     .catalog-container, .main-content {
-        padding: 15px;
-        margin-top: 20px;
+        padding: 15px !important;
+        margin-top: 10px !important;
     }
 
-    /* 2. Grid Automation */
-    .catalog-grid {
+    /* 2. Top Header Navigation Layout Adjustment */
+    .main-header {
+        padding: 12px 15px !important;
+    }
+    .main-header .logo {
+        font-size: 1.1rem !important;
+    }
+
+    /* 3. Grid Automation for Catalog & Dashboards */
+    .catalog-grid, .dashboard-grid {
         grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)) !important;
-        gap: 15px;
+        gap: 15px !important;
     }
 
-    /* 3. Sidebar Overlay Configuration (Fixed to prevent double-shifting) */
+    /* 4. Column Collapse for Dashboard Details & Review Elements */
+    .dashboard-details {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 20px !important;
+        margin-top: 15px !important;
+    }
+
+    /* FIX: Corrected attribute selector syntax with appropriate enclosing brackets */
+    main[style*="display: flex"], 
+    main > div[style*="display: flex"],
+    div[style*="display: flex"] {
+        flex-direction: column !important;
+        gap: 15px !important;
+    }
+
+    .recent-activity, .quick-actions, .stat-card {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: none !important;
+    }
+
+    /* 5. Fixes Overlapping & Sizing on Quick Action Buttons */
+    .quick-actions button, 
+    .quick-actions a,
+    .quick-actions .btn-role,
+    div[style*="min-width: 250px"] button,
+    div[style*="min-width: 250px"] a {
+        display: block !important;
+        width: 100% !important;
+        margin: 8px 0 !important;
+        box-sizing: border-box !important;
+        text-align: center !important;
+    }
+
+    /* 6. Sidebar Overlay Configuration */
     .side-panel {
         width: 280px;
         position: fixed;
-        left: -290px; /* Fully conceals the wider panel border shadows */
+        left: -290px;
         z-index: 9999;
-        transition: left 0.3s ease; /* Uniform transition parameter matching positioning properties */
+        transition: left 0.3s ease;
     }
     
     .side-panel.open {
-        left: 0 !important; /* Leverages identical layout logic to prevent alignment collisions */
+        left: 0 !important;
         transform: none !important;
     }
 
-    /* Prevents content layout displacement on mobile screens */
     .main-content.shifted {
         margin-left: 0 !important;
     }
 
-    /* 4. Table Scroll Containment */
+    /* 7. Table Scroll Containment */
     .history-card {
-        padding: 15px;
-        overflow-x: auto;
+        padding: 15px !important;
+        overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
     }
     
     .history-table {
-        min-width: 600px; /* Sustains tabular row integrity inside the scroll wrap box */
+        min-width: 600px;
     }
 
-    /* 5. Flex Alignment Compressors */
-    .catalog-header, .catalog-controls, .dashboard-details {
-        flex-direction: column;
+    /* 8. Controls and Form Selection Adaptations */
+    .catalog-header, .catalog-controls {
+        flex-direction: column !important;
         align-items: stretch !important;
-        gap: 10px;
+        gap: 10px !important;
     }
 
-    #catalogSearch, #categorySelect, .stat-card {
+    #catalogSearch, #categorySelect {
         width: 100% !important;
         min-width: 0 !important;
     }
 
-    /* 6. FIX: Overrides inline JavaScript modal widths on small viewports */
+    /* 9. JavaScript Generated Modal Adaptive Override */
     body > div[style*="position:fixed"] > div {
-        width: 90% !important;
+        width: 92% !important;
         max-width: 420px !important;
         padding: 20px !important;
         box-sizing: border-box !important;
