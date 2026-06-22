@@ -704,18 +704,18 @@ input {
         margin-left: 0 !important;
     }
 
-    /* 4. Targeted Split Layout Stacking (Descendant fix for nested review containers) */
-    .main-content div[style*="display: flex"],
-    .main-content div[style*="display:flex"],
+    /* 4. Targeted Split Layout Stacking (Universal Tag Fix) */
+    .main-content [style*="display: flex"],
+    .main-content [style*="display:flex"],
     .dashboard-details {
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 20px !important;
     }
 
-    /* Normalizes split width partitions into stacked cards */
-    .main-content div[style*="display: flex"] > div,
-    .main-content div[style*="display:flex"] > div {
+    /* Normalizes ALL horizontal child panels (divs, sections, cards) into full-width stacked layouts */
+    .main-content [style*="display: flex"] > *,
+    .main-content [style*="display:flex"] > * {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
