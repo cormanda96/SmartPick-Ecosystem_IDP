@@ -651,7 +651,7 @@ input {
     border-bottom: 1px solid #eee;
 }
 /* ============================================================
-   PREMIUM CROSS-PLATFORM INTERFACE OPTIMIZATION (CLEANED)
+   PREMIUM CROSS-PLATFORM INTERFACE OPTIMIZATION (FIXED)
    ============================================================ */
 
 @media screen and (max-width: 768px) {
@@ -704,9 +704,9 @@ input {
         margin-left: 0 !important;
     }
 
-    /* 4. Targeted Split Layout Stacking (Applies only to core main page views) */
-    .main-content > div[style*="display: flex"],
-    .main-content > div[style*="display:flex"],
+    /* 4. Targeted Split Layout Stacking (Descendant fix for nested review containers) */
+    .main-content div[style*="display: flex"],
+    .main-content div[style*="display:flex"],
     .dashboard-details {
         flex-direction: column !important;
         align-items: stretch !important;
@@ -714,31 +714,12 @@ input {
     }
 
     /* Normalizes split width partitions into stacked cards */
-    .main-content > div[style*="display: flex"] > div,
-    .main-content > div[style*="display:flex"] > div {
+    .main-content div[style*="display: flex"] > div,
+    .main-content div[style*="display:flex"] > div {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
         flex: none !important;
-        box-sizing: border-box !important;
-    }
-
-    /* ── ADDITION: Internal Card Layout Stacking for Supervisor Review Details ── */
-    /* Forces the Circuit Diagram card and Requested Items list to stack vertically on phone screens */
-    .main-content div[style*="display: flex"] div[style*="display: flex"],
-    .main-content div[style*="display:flex"] div[style*="display:flex"] {
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 15px !important;
-    }
-
-    /* Ensures the nested inner container items extend to full mobile card bounds cleanly */
-    .main-content div[style*="display: flex"] div[style*="display: flex"] > div,
-    .main-content div[style*="display:flex"] div[style*="display:flex"] > div,
-    div[style*="border: 2px dashed"],
-    div[style*="dashed"] {
-        width: 100% !important;
-        max-width: 100% !important;
         box-sizing: border-box !important;
     }
 
@@ -749,7 +730,7 @@ input {
         max-width: 100% !important;
         height: auto !important;
         border-radius: 8px;
-        margin: 10px auto !important; /* Centers layout graphic responsively */
+        margin: 10px 0 !important;
         display: block;
     }
 
@@ -759,15 +740,11 @@ input {
         gap: 16px !important;
     }
 
-    /* 7. Action Button Alignment Preservation */
-    div[style*="margin-top:10px; display:flex; gap:8px;"] {
-        flex-direction: row !important; /* Keeps confirmation buttons side-by-side */
+    /* 7. Action Button Alignment Preservation (Forces buttons to stay side-by-side) */
+    .main-content div[style*="margin-top:10px; display:flex; gap:8px;"],
+    .main-content div[style*="margin-top:10px; display:flex; gap:8px;"] {
+        flex-direction: row !important;
         gap: 10px !important;
-    }
-
-    div[style*="margin-top:10px; display:flex; gap:8px;"] button {
-        padding: 12px 10px !important; /* Expands click surface targets to be easy-to-tap */
-        font-size: 0.85rem !important;
     }
 
     /* 8. Table Scroll Containment */
@@ -781,8 +758,8 @@ input {
         min-width: 580px !important;
     }
 
-    /* 9. Fluid Form Sizing & Feedback Textarea Optimization */
-    #catalogSearch, #categorySelect, input, select, textarea, #feedback-comment {
+    /* 9. Fluid Form Sizing */
+    #catalogSearch, #categorySelect, input, select, textarea {
         width: 100% !important;
         min-width: 0 !important;
         box-sizing: border-box !important;
