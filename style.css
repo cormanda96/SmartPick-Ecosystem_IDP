@@ -651,19 +651,26 @@ input {
     border-bottom: 1px solid #eee;
 }
 /* ============================================================
-   PREMIUM CROSS-PLATFORM INTERFACE OPTIMIZATION (FIXED)
+   PREMIUM CROSS-PLATFORM INTERFACE OPTIMIZATION (FORCE FIX)
    ============================================================ */
 
 @media screen and (max-width: 768px) {
-    /* 1. Main Container & Spacing Resets */
-    .catalog-container, .main-content {
-        padding: 16px !important;
-        margin-top: 10px !important;
+    /* 1. Global Viewport Safety Anchors */
+    body {
+        overflow-x: hidden !important; /* Prevents horizontal layout shaking */
     }
 
-    /* 2. Header and Profile Protection (Sustains inline row tracking) */
+    .catalog-container, .main-content, #main-content {
+        padding: 14px !important;
+        margin-top: 10px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2. Header & User Dropdown Alignment Protection */
     .main-header {
-        padding: 12px 20px !important;
+        padding: 12px 15px !important;
         display: flex !important;
         flex-direction: row !important;
         justify-content: space-between !important;
@@ -677,7 +684,6 @@ input {
         gap: 12px !important;
     }
 
-    /* Fixes profile dropdown overflow cutoffs */
     #profile-dropdown {
         right: 10px !important;
         left: auto !important;
@@ -685,13 +691,13 @@ input {
         width: 260px !important;
     }
 
-    /* 3. Stabilize Sidebar Overlay (Keeps hamburger menu button clickable) */
+    /* 3. Sidebar Overlay Configuration */
     .side-panel {
         width: 240px !important;
         position: fixed !important;
         top: 0 !important;
         left: -260px !important;
-        z-index: 999 !important; /* Set below main-header (1000) so menu stays accessible */
+        z-index: 999 !important; /* Floats below header bar to ensure toggle clicks register */
         box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15) !important;
         transition: left 0.3s ease !important;
     }
@@ -700,22 +706,28 @@ input {
         left: 0 !important;
     }
 
-    .main-content.shifted {
+    .main-content.shifted, #main-content.shifted {
         margin-left: 0 !important;
     }
 
-    /* 4. Targeted Split Layout Stacking (Bulletproof Selector Fix) */
-    .main-content [style*="display: flex"],
-    .main-content [style*="display:flex"],
+    /* 4. CRITICAL: Global Stacking Force (Fixes Supervisor Page Side-by-Side) */
+    /* Target any flex layout element inside main content container to stack top-to-bottom */
+    .main-content div, 
+    #main-content div,
+    .main-content section,
     .dashboard-details {
+        /* If an element uses inline flex-display, override its direction parameter */
         flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 20px !important;
     }
 
-    /* Normalizes ALL child containers inside both space and space-less flex layouts */
-    .main-content [style*="display: flex"] > *,
-    .main-content [style*="display:flex"] > * {
+    /* Forces both the student list container and the details review container to be 100% full width */
+    .main-content div > div,
+    #main-content div > div,
+    .main-content section > div,
+    #master-student-list,
+    .history-card,
+    div[style*="width"],
+    div[style*="flex"] {
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
@@ -723,14 +735,15 @@ input {
         box-sizing: border-box !important;
     }
 
-    /* 5. Circuit Diagram Image Normalization */
+    /* 5. Circuit Diagram Image & Card Auto-Scaling */
     #diagram-preview,
-    img[id="diagram-preview"] {
+    img[id="diagram-preview"],
+    div[style*="border: 2px dashed"] {
         width: 100% !important;
         max-width: 100% !important;
         height: auto !important;
         border-radius: 8px;
-        margin: 10px 0 !important;
+        margin: 10px auto !important;
         display: block;
     }
 
@@ -740,10 +753,11 @@ input {
         gap: 16px !important;
     }
 
-    /* 7. Action Button Alignment Preservation (Forces buttons to stay side-by-side) */
-    .main-content div[style*="margin-top:10px; display:flex; gap:8px;"],
-    .main-content div[style*="margin-top:10px; display:flex; gap:8px;"] {
+    /* 7. Action Buttons Row (Keep Approve and Decline buttons side-by-side layout) */
+    div[style*="margin-top:10px; display:flex; gap:8px;"],
+    div[style*="margin-top: 10px; display: flex; gap: 8px;"] {
         flex-direction: row !important;
+        display: flex !important;
         gap: 10px !important;
     }
 
