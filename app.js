@@ -590,23 +590,37 @@ export async function assignDrawer(componentId, drawerLabel) {
 
 
 // ============================================================
-//  CATALOG — Manager: delete a component
+//  CATALOG — Manager: delete a component (Safe Cascade Fix)
 // ============================================================
 export async function deleteComponent(id) {
-    if (!confirm('Are you sure you want to delete this component?')) return
+    if (!confirm('Are you sure you want to delete this component? This will clean up linked proposal items.')) return
 
-    // Get drawer_id first before deleting component
+    // 1. Get drawer_id first before deleting anything
     const { data: comp } = await supabase
         .from('components')
         .select('drawer_id')
         .eq('id', id)
         .single()
 
-    // Delete component first
-    const { error } = await supabase.from('components').delete().eq('id', id)
-    if (error) { alert('Delete failed: ' + error.message); return }
+    // 2. FIX: Delete child rows inside proposal_items that reference this component id first
+    const { error: cascadeError } = await supabase
+        .from('proposal_items')
+        .delete()
+        .eq('component_id', id)
 
-    // Then delete the linked drawer
+    if (cascadeError) {
+        alert('Failed to clean up linked proposal records: ' + cascadeError.message)
+        return
+    }
+
+    // 3. Now it is safe to delete the component itself
+    const { error } = await supabase.from('components').delete().eq('id', id)
+    if (error) { 
+        alert('Delete failed: ' + error.message); 
+        return 
+    }
+
+    // 4. Finally, delete the linked physical drawer hardware slot
     if (comp?.drawer_id) {
         await supabase.from('drawers').delete().eq('id', comp.drawer_id)
     }
