@@ -602,7 +602,7 @@ export async function deleteComponent(id) {
         .eq('id', id)
         .single()
 
-    // 2. FIX: Delete child rows inside proposal_items that reference this component id first
+    // 2. CRITICAL FIX: Delete the locked student requests first!
     const { error: cascadeError } = await supabase
         .from('proposal_items')
         .delete()
@@ -613,7 +613,7 @@ export async function deleteComponent(id) {
         return
     }
 
-    // 3. Now it is safe to delete the component itself
+    // 3. Now the database constraint is clear, it is safe to delete the component
     const { error } = await supabase.from('components').delete().eq('id', id)
     if (error) { 
         alert('Delete failed: ' + error.message); 
